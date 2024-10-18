@@ -1,132 +1,96 @@
-﻿using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
-using System.Security.Cryptography;
-using System.Text;
+﻿using EncryptionTool.cmd;
+using EncryptionTool.utils;
 
+Dictionary<AllowedArguments, string> arguments = ArgumentParser.GetParsedArguments(args);
 
-const string originalFilepath = "sample.txt";
-const string encryptedFilepath = "sample.txt.encrypted";
-const string decryptedFilepath = "sample.txt.decrypted";
-
-CreateSampleFile(originalFilepath);
-HandleFileEncryption(originalFilepath, encryptedFilepath);
-HandleFileDecryption(encryptedFilepath, decryptedFilepath);
-CompareFiles(originalFilepath, decryptedFilepath);
-
-static void HandleFileEncryption(string filepath, string encryptedFilepath)
+if (arguments.Count == 3)
 {
-    string password = "password";
-    string salt = "salt";
-
-    byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-    byte[] saltBytes = Encoding.UTF8.GetBytes(salt);
-    byte[] key = PBKDF2Hash(passwordBytes, saltBytes);
-
-    try
-    {
-        byte[] file = File.ReadAllBytes(filepath);
-        byte[] fileEncrypted = Aes256Encrypt(file, key);
-
-        File.WriteAllBytes(encryptedFilepath, fileEncrypted);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine(ex.ToString());
-    }
+    ActOnInputs(arguments);
+    return;
 }
 
-static void HandleFileDecryption(string encryptedFilepath, string decryptedFilepath)
+var input = "";
+
+Console.WriteLine("To exit, type 'q'");
+
+while (input != "q")
 {
-    string password = "password";
-    string salt = "salt";
 
-    byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-    byte[] saltBytes = Encoding.UTF8.GetBytes(salt);
-    byte[] key = PBKDF2Hash(passwordBytes, saltBytes);
-
-    try
+    if (!arguments.ContainsKey(AllowedArguments.action))
     {
-        var encryptedFile = File.ReadAllBytes(encryptedFilepath);
-        var decryptedFile = AesDecrypt(encryptedFile, key);
+        Console.Write("Pick an action (encrypt/decrypt): ");
+        input = Console.ReadLine();
 
-        File.WriteAllBytes(decryptedFilepath, decryptedFile);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine(ex.ToString());
-    }
-}
-
-static byte[] Aes256Encrypt(byte[] input, byte[] key)
-{
-    SecureRandom random = new();
-
-    byte[] iv = new byte[16];
-    random.NextBytes(iv);
-
-    var cipher = CipherUtilities.GetCipher("AES/CBC/PKCS7Padding");
-    cipher.Init(true, new ParametersWithIV(new KeyParameter(key), iv));
-
-    using var combinedStream = new MemoryStream();
-    {
-        using var binaryWriter = new BinaryWriter(combinedStream);
+        if (Enum.IsDefined(typeof(AllowedArgumentsActions), input.ToLower()))
         {
-            binaryWriter.Write(iv);
-            binaryWriter.Write(cipher.DoFinal(input));
+            arguments.Add(AllowedArguments.action, input);
         }
-
-        return combinedStream.ToArray();
-    }
-}
-
-static byte[] AesDecrypt(byte[] encryptedBytes, byte[] key)
-{
-    var cipher = CipherUtilities.GetCipher("AES/CBC/PKCS7Padding");
-    byte[] iv = encryptedBytes[..16];
-
-    cipher.Init(false, new ParametersWithIV(new KeyParameter(key), iv));
-
-    return cipher.DoFinal(encryptedBytes[16..]);
-}
-
-
-static byte[] PBKDF2Hash(byte[] input, byte[] salt)
-{
-    var pbkdf2 = Rfc2898DeriveBytes.Pbkdf2(input, salt, 200000, HashAlgorithmName.SHA256, 256 / 8);
-
-    return pbkdf2;
-}
-
-static void CreateSampleFile(string filepath)
-{
-    using StreamWriter writer = new(filepath);
-    {
-        writer.WriteLine("Sample text file");
-    }
-    writer.Close();
-}
-
-static void CompareFiles(string originalFilepath, string decryptedFilepath)
-{
-    try
-    {
-        var originalFile = File.ReadAllBytes(originalFilepath);
-        var decryptedFile = File.ReadAllBytes(decryptedFilepath);
-
-        var originalHash = SHA256.HashData(originalFile);
-        var decryptedHash = SHA256.HashData(decryptedFile);
-
-        if (originalHash.SequenceEqual(decryptedHash))
+        else 
         {
-            Console.WriteLine("Original and decrypted file hashes are equal");
+            Console.WriteLine("Invalid action");
+        }
+            
+        continue;
+    }
+
+    if (!arguments.ContainsKey(AllowedArguments.file))
+    {
+        Console.Write("Provide filepath: ");
+        input = Console.ReadLine();
+
+        if (File.Exists(input))
+        { 
+            arguments.Add(AllowedArguments.file, input);
         } 
         else
         {
-            throw new Exception("Original and decrypted file hashes are not equal");
+            Console.WriteLine("Could not find the file");
+        }
+
+        continue;
+    }
+
+    if (!arguments.ContainsKey(AllowedArguments.password))
+    {
+        Console.Write("Provide file password: ");
+        input = Console.ReadLine();
+
+        arguments.Add(AllowedArguments.password, input);
+
+        continue;
+    }
+
+    Console.Write("Proceed?(y/n): ");
+    input = Console.ReadLine();
+
+    if (input == "y")
+    {
+        ActOnInputs(arguments);
+        break;
+    }
+    else if (input == "n")
+    {
+        break;
+    }
+}
+
+static void ActOnInputs(Dictionary<AllowedArguments, string> arguments)
+{
+    try
+    {
+        if (AllowedArgumentsActions.encrypt.ToString() == arguments[AllowedArguments.action])
+        {
+            EncryptionCommands.Encrypt(arguments);
+        }
+        else if (AllowedArgumentsActions.decrypt.ToString() == arguments[AllowedArguments.action])
+        {
+            EncryptionCommands.Decrypt(arguments);
         }
     }
     catch (Exception ex)
     {
         Console.WriteLine(ex.ToString());
     }
+
+    return;
 }
