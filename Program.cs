@@ -1,9 +1,14 @@
 ﻿using EncryptionTool.cmd;
+using EncryptionTool.models;
+using EncryptionTool.services;
 using EncryptionTool.utils;
+using System.Text;
 
-Dictionary<AllowedArguments, string> arguments = ArgumentParser.GetParsedArguments(args);
+Arguments arguments = ArgumentParser.GetParsedArguments(args);
 
-if (arguments.Count == 3)
+if (arguments.Action != null && 
+    arguments.File != string.Empty && 
+    arguments.Password.Length > 0)
 {
     ActOnInputs(arguments);
     return;
@@ -16,14 +21,14 @@ Console.WriteLine("To exit, type 'q'");
 while (input != "q")
 {
 
-    if (!arguments.ContainsKey(AllowedArguments.action))
+    if (arguments.Action == null)
     {
         Console.Write("Pick an action (encrypt/decrypt): ");
         input = Console.ReadLine();
 
-        if (Enum.IsDefined(typeof(AllowedArgumentsActions), input.ToLower()))
+        if (Enum.TryParse<AllowedArgumentsActions>(input, true, out AllowedArgumentsActions parsedInput))
         {
-            arguments.Add(AllowedArguments.action, input);
+            arguments.Action = parsedInput;
         }
         else 
         {
@@ -33,14 +38,14 @@ while (input != "q")
         continue;
     }
 
-    if (!arguments.ContainsKey(AllowedArguments.file))
+    if (arguments.File == String.Empty)
     {
         Console.Write("Provide filepath: ");
         input = Console.ReadLine();
 
         if (File.Exists(input))
         { 
-            arguments.Add(AllowedArguments.file, input);
+            arguments.File = input;
         } 
         else
         {
@@ -50,12 +55,11 @@ while (input != "q")
         continue;
     }
 
-    if (!arguments.ContainsKey(AllowedArguments.password))
+    if (arguments.Password.Length == 0)
     {
         Console.Write("Provide file password: ");
-        input = Console.ReadLine();
 
-        arguments.Add(AllowedArguments.password, input);
+        arguments.Password = EncryptionService.PBKDF2Hash(Encoding.UTF8.GetBytes(Console.ReadLine()));
 
         continue;
     }
@@ -74,15 +78,15 @@ while (input != "q")
     }
 }
 
-static void ActOnInputs(Dictionary<AllowedArguments, string> arguments)
+static void ActOnInputs(Arguments arguments)
 {
     try
     {
-        if (AllowedArgumentsActions.encrypt.ToString() == arguments[AllowedArguments.action])
+        if (AllowedArgumentsActions.encrypt == arguments.Action)
         {
             EncryptionCommands.Encrypt(arguments);
         }
-        else if (AllowedArgumentsActions.decrypt.ToString() == arguments[AllowedArguments.action])
+        else if (AllowedArgumentsActions.decrypt == arguments.Action)
         {
             EncryptionCommands.Decrypt(arguments);
         }

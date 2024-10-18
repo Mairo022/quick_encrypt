@@ -1,10 +1,11 @@
 ﻿using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace EncryptionTool.services;
 
-public class EncryptionService()
+public static class EncryptionService
 {
     public static byte[] Aes256Encrypt(byte[] input, byte[] key)
     {
@@ -38,8 +39,9 @@ public class EncryptionService()
         return cipher.DoFinal(encryptedBytes[16..]);
     }
 
-    public static byte[] PBKDF2Hash(byte[] input, byte[] salt)
+    public static byte[] PBKDF2Hash(byte[] input)
     {
+        byte[] salt = Encoding.UTF8.GetBytes("sampleSalt");
         byte[] pbkdf2 = Rfc2898DeriveBytes.Pbkdf2(input, salt, 200000, HashAlgorithmName.SHA256, 256 / 8);
 
         return pbkdf2;

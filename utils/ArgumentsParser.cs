@@ -1,39 +1,37 @@
-﻿namespace EncryptionTool.utils;
+﻿using EncryptionTool.models;
+using EncryptionTool.services;
+using System.Text;
 
-public enum AllowedArguments
-{
-    action,
-    file,
-    password
-}
-
-enum AllowedArgumentsActions
-{
-    encrypt,
-    decrypt
-}
+namespace EncryptionTool.utils;
 
 public static class ArgumentParser
 {
-    public static Dictionary<AllowedArguments, string> GetParsedArguments(string[] args)
+    public static Arguments GetParsedArguments(string[] args)
     {
-        Dictionary<AllowedArguments, string> arguments = new();
+        Arguments arguments = new();
 
         foreach (string arg in args)
         {
             string[] keyValue = arg.Split(":", 2);
 
-            string key = keyValue[0];
+            string key = keyValue[0].ToLower();
             string value = keyValue.Length == 2 ? keyValue[1] : "";
 
-            if (!Enum.TryParse<AllowedArguments>(key, true, out AllowedArguments parsedKey)) continue;
+            if (!arguments.AllowedArguments.Contains(key)) continue;
 
-            if (parsedKey == AllowedArguments.action)
+            switch (key)
             {
-                if (Enum.IsDefined(typeof(AllowedArgumentsActions), value))
-                    arguments.Add(parsedKey, value);
+                case "file":
+                    arguments.File = value;
+                    break;
+                case "password":
+                    arguments.Password = EncryptionService.PBKDF2Hash(Encoding.UTF8.GetBytes(value));
+                    break;
+                case "action":
+                    if (!Enum.TryParse<AllowedArgumentsActions>(value, true, out AllowedArgumentsActions parsedValue)) break;
+                    arguments.Action = parsedValue;
+                    break;
             }
-            else arguments.Add(parsedKey, value);
         }
 
         return arguments;
