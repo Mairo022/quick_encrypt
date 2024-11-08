@@ -24,8 +24,11 @@ public static class ArgumentParser
                 case "file":
                     arguments.File = value;
                     break;
+                case "dir":
+                    arguments.Dir = value;
+                    break;
                 case "password":
-                    arguments.Password = EncryptionService.PBKDF2Hash(Encoding.UTF8.GetBytes(value));
+                    arguments.Password = AesCbcEncryptionService.PBKDF2Hash(Encoding.UTF8.GetBytes(value));
                     break;
                 case "action":
                     if (!Enum.TryParse<AllowedArgumentsActions>(value, true, out AllowedArgumentsActions parsedValue)) break;

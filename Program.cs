@@ -7,10 +7,11 @@ using System.Text;
 Arguments arguments = ArgumentParser.GetParsedArguments(args);
 
 if (arguments.Action != null && 
-    arguments.File != string.Empty && 
+    (arguments.File != string.Empty || arguments.Dir != string.Empty) && 
     arguments.Password.Length > 0)
 {
     ActOnInputs(arguments);
+    arguments.Clear();
     return;
 }
 
@@ -59,7 +60,7 @@ while (input != "q")
     {
         Console.Write("Provide file password: ");
 
-        arguments.Password = EncryptionService.PBKDF2Hash(Encoding.UTF8.GetBytes(Console.ReadLine()));
+        arguments.Password = AesCbcEncryptionService.PBKDF2Hash(Encoding.UTF8.GetBytes(Console.ReadLine()));
 
         continue;
     }
@@ -84,11 +85,12 @@ static void ActOnInputs(Arguments arguments)
     {
         if (AllowedArgumentsActions.encrypt == arguments.Action)
         {
-            EncryptionCommands.Encrypt(arguments);
+            if (arguments.File != String.Empty) EncryptionCommands.EncryptFile(arguments);
+            else if (arguments.Dir != String.Empty) EncryptionCommands.EncryptDirectory(arguments);
         }
         else if (AllowedArgumentsActions.decrypt == arguments.Action)
         {
-            EncryptionCommands.Decrypt(arguments);
+            EncryptionCommands.DecryptFile(arguments);
         }
     }
     catch (Exception ex)

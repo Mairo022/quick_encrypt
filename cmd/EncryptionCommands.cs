@@ -1,40 +1,25 @@
 ﻿using EncryptionTool.models;
 using EncryptionTool.services;
-using EncryptionTool.utils;
 
 namespace EncryptionTool.cmd;
 
 public static class EncryptionCommands
 {
-    public static void Encrypt(Arguments arguments)
+    public static void EncryptFile(Arguments arguments)
     {
-        var file = FileService.ReadFile(arguments.File);
-        var fileEncrypted = EncryptionService.Aes256Encrypt(file, arguments.Password);
+        var file = File.ReadAllBytes(arguments.File);
+        var fileEncrypted = AesCbcEncryptionService.EncryptBytes(file, arguments.Password);
 
-        FileService.WriteFile(arguments.File + ".ec", fileEncrypted);
-
-        arguments.Clear();
+        File.WriteAllBytes(arguments.File + ".bin", fileEncrypted);
     }
 
-    public static void Decrypt(Arguments arguments)
+    public static void EncryptDirectory(Arguments arguments)
     {
-        var file = FileService.ReadFile(arguments.File);
-        var fileDecrypted = EncryptionService.AesDecrypt(file, arguments.Password);
-        var filepathDecrypted = GetDecryptedFilepath(arguments.File);
-
-        FileService.WriteFile(filepathDecrypted, fileDecrypted);
-
-        arguments.Clear();
+        AesCbcEncryptionService.EncryptDirectory(arguments.Dir, arguments.Password);
     }
 
-    private static string GetDecryptedFilepath(string filepathEncrypted)
+    public static void DecryptFile(Arguments arguments)
     {
-        var filepathSplit = StringUtils.SplitFromLastOccurence(filepathEncrypted, '\\');
-        if (filepathSplit.Length != 2) throw new Exception("Could not split filepath by \\");
-
-        var filenameSplit = StringUtils.SplitFromLastOccurence(filepathSplit[1], '.');
-        if (filepathSplit.Length != 2) throw new Exception("Could not split filename by .");
-
-        return filepathSplit[0] + "\\dc." + filenameSplit[0][1..];
+        AesCbcEncryptionService.DecryptFile(arguments.File, arguments.Password);
     }
 }
