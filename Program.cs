@@ -6,76 +6,93 @@ using System.Text;
 
 Arguments arguments = ArgumentParser.GetParsedArguments(args);
 
-if (arguments.Action != null && 
-    (arguments.File != string.Empty || arguments.Dir != string.Empty) && 
-    arguments.Password.Length > 0)
+if (arguments.Action != null 
+    && (arguments.File != string.Empty || arguments.Dir != string.Empty) 
+    && arguments.Password.Length > 0
+    )
 {
     ActOnInputs(arguments);
     arguments.Clear();
     return;
 }
+arguments.Clear();
 
-var input = "";
+CLIWriteStartText();
 
-Console.WriteLine("To exit, type 'q'");
+string input;
+var cliActive = true;
 
-while (input != "q")
+while (cliActive)
 {
+    Console.Write("\nEnter command: ");
+    input = Console.ReadLine() ?? "";
 
-    if (arguments.Action == null)
-    {
-        Console.Write("Pick an action (encrypt/decrypt): ");
-        input = Console.ReadLine();
-
-        if (Enum.TryParse<AllowedArgumentsActions>(input, true, out AllowedArgumentsActions parsedInput))
-        {
-            arguments.Action = parsedInput;
-        }
-        else 
-        {
-            Console.WriteLine("Invalid action");
-        }
-            
+    if (input == "q") 
+    { 
+        cliActive = false;
         continue;
     }
 
-    if (arguments.File == String.Empty)
+    if (input == "c")
     {
-        Console.Write("Provide filepath: ");
-        input = Console.ReadLine();
-
-        if (File.Exists(input))
-        { 
-            arguments.File = input;
-        } 
-        else
-        {
-            Console.WriteLine("Could not find the file");
-        }
-
+        Console.Clear();
+        CLIWriteStartText();
         continue;
     }
 
-    if (arguments.Password.Length == 0)
-    {
-        Console.Write("Provide file password: ");
+    var inputSplit = input?.Trim().Split(" ", 2);
 
+    if (inputSplit == null || inputSplit.Length != 2)
+    {
+        Console.WriteLine("Invalid command");
+        continue;
+    }
+
+    var action = inputSplit[0];
+    var path = inputSplit[1].Trim();
+
+    // Validate action
+    if (!Enum.TryParse<AllowedArgumentsActions>(action, true, out AllowedArgumentsActions parsedValue)) continue;
+    arguments.Action = parsedValue;
+
+    // Validate path
+    if (File.Exists(path))
+    {
+        arguments.File = path;
+    }
+    else if (Directory.Exists(path))
+    {
+        if (!Directory.EnumerateFileSystemEntries(path).Any())
+        {
+            Console.WriteLine("Directory is empty");
+            continue;
+        }
+        arguments.Dir = path;
+    }
+    else
+    {
+        Console.WriteLine($"Invalid filepath or directory: {path}");
+        continue;
+    }
+
+    // Get key and perform
+    Console.Write("Enter password: ");
+
+    try
+    {
         arguments.Password = AesCbcEncryptionService.PBKDF2Hash(Encoding.UTF8.GetBytes(Console.ReadLine()));
-
-        continue;
-    }
-
-    Console.Write("Proceed?(y/n): ");
-    input = Console.ReadLine();
-
-    if (input == "y")
-    {
+        Console.WriteLine($"Starting {action}ion");
         ActOnInputs(arguments);
-        break;
+        Console.WriteLine($"{StringUtils.FirstLetterToUpper(action)}ion successful");
     }
-    else if (input == "n")
+    catch (Exception ex)
     {
-        break;
+        Console.WriteLine($"Failed {action}ing:");
+        Console.WriteLine(ex.ToString());
+    }
+    finally
+    {
+        arguments.Clear();
     }
 }
 
@@ -99,4 +116,14 @@ static void ActOnInputs(Arguments arguments)
     }
 
     return;
+}
+
+static void CLIWriteStartText()
+{
+    Console.WriteLine("Choose an action by typing the action name followed by the path:");
+    Console.WriteLine("1. encrypt [path]");
+    Console.WriteLine("2. decrypt [path]");
+    Console.WriteLine("q - quit the program");
+    Console.WriteLine("c - clear console\n");
+    Console.WriteLine("Example: encrypt /path/to/directory");
 }
