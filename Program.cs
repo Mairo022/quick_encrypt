@@ -11,9 +11,10 @@ if (arguments.Action != null
     && arguments.Password.Length > 0
     )
 {
-    ActOnInputs(arguments);
-    arguments.Clear();
-    return;
+    if (ActOnInputs(arguments))
+    {
+        return;
+    }
 }
 arguments.Clear();
 
@@ -52,7 +53,11 @@ while (cliActive)
     var path = inputSplit[1].Trim();
 
     // Validate action
-    if (!Enum.TryParse<AllowedArgumentsActions>(action, true, out AllowedArgumentsActions parsedValue)) continue;
+    if (!Enum.TryParse<AllowedArgumentsActions>(action, true, out AllowedArgumentsActions parsedValue))
+    {
+        Console.WriteLine("Invalid command");
+        continue;
+    }
     arguments.Action = parsedValue;
 
     // Validate path
@@ -78,28 +83,16 @@ while (cliActive)
     // Get key and perform
     Console.Write("Enter password: ");
 
-    try
-    {
-        arguments.Password = AesCbcEncryptionService.PBKDF2Hash(Encoding.UTF8.GetBytes(Console.ReadLine()));
-        Console.WriteLine($"Starting {action}ion");
-        ActOnInputs(arguments);
-        Console.WriteLine($"{StringUtils.FirstLetterToUpper(action)}ion successful");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Failed {action}ing:");
-        Console.WriteLine(ex.ToString());
-    }
-    finally
-    {
-        arguments.Clear();
-    }
+    arguments.Password = AesCbcEncryptionService.PBKDF2Hash(Encoding.UTF8.GetBytes(Console.ReadLine()));
+    ActOnInputs(arguments);
 }
 
-static void ActOnInputs(Arguments arguments)
+static bool ActOnInputs(Arguments arguments)
 {
     try
     {
+        Console.WriteLine($"Starting {arguments.Action}ion");
+
         if (AllowedArgumentsActions.encrypt == arguments.Action)
         {
             if (arguments.File != String.Empty) EncryptionCommands.EncryptFile(arguments);
@@ -109,13 +102,22 @@ static void ActOnInputs(Arguments arguments)
         {
             EncryptionCommands.DecryptFile(arguments);
         }
+
+        Console.WriteLine($"{StringUtils.FirstLetterToUpper(arguments.Action.ToString()) ?? ""}ion successful");
+
+        return true;
     }
     catch (Exception ex)
     {
+        Console.WriteLine($"Failed {arguments.Action}ing:");
         Console.WriteLine(ex.ToString());
-    }
 
-    return;
+        return false;
+    }
+    finally
+    {
+        arguments.Clear();
+    }
 }
 
 static void CLIWriteStartText()

@@ -13,7 +13,7 @@ public class Arguments()
     public string Dir { get; set; } = string.Empty;
     public byte[] Password { get; set; } = [];
 
-    public readonly string[] AllowedArguments = ["action", "file", "password"];
+    public readonly string[] AllowedArguments = ["action", "file", "dir", "password"];
 
     public void Clear()
     {

@@ -148,7 +148,7 @@ public static class AesCbcEncryptionService
                     throw new Exception("File write stream not initialised before writing");
                 }
 
-                if (bytesToFileEnd == bytesRead || fileReadStream.Position > 2600)
+                if (bytesToFileEnd == bytesRead)
                 {
                     fileWriteStream.Write(buffer, 0, bytesRead);
                     fileWriteStream.Close();
@@ -215,11 +215,9 @@ public static class AesCbcEncryptionService
         var padding = 16 - 1;
 
         // files
-        var ivs = iv * filepaths.Length;
-        var headers = filepaths.Sum(filename => filename.Length + header);
-        var files = filepaths.Sum(filename => new FileInfo(filename).Length) + padding;
+        var files = iv + filepaths.Sum(filename => header + new FileInfo(filename).Length) + padding;
 
-        return type + ivs + headers + files;
+        return type + files;
     }
 
     static IBufferedCipher BufferedCipher(byte[] key, byte[] iv)
