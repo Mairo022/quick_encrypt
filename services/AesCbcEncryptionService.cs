@@ -1,4 +1,6 @@
-﻿using EncryptionTool.utils;
+﻿using System.Runtime.InteropServices;
+using System.Security;
+using EncryptionTool.utils;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.IO;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -13,7 +15,7 @@ public static class AesCbcEncryptionService
 {
     public static byte[] EncryptBytes(byte[] input, byte[] key)
     {
-        var cipher = InitCipher(key, out byte[] iv);
+        var cipher = InitCipherEncrypt(key, out byte[] iv);
         var fileType = CreateEncryptedFiletypeBytes(key, FILE_TYPES.FILE);
 
         using var combinedStream = new MemoryStream();
@@ -45,11 +47,11 @@ public static class AesCbcEncryptionService
         var parentDir = Directory.GetParent(dir).ToString();
         var outputFilepath = Path.Combine(parentDir, Path.GetFileName(dir) + ".bin");
         outputFilepath = FileService.GetUniqueFilepath(outputFilepath);
-
+        
         long encryptedSize = GetTotalEncryptedFilesSize(filenames);
         var fileType = CreateEncryptedFiletypeBytes(key, FILE_TYPES.DIRECTORY);
 
-        var cipher = InitCipher(key, out byte[] iv);
+        var cipher = InitCipherEncrypt(key, out byte[] iv);
 
         using var fileWriteStream = new FileStream(outputFilepath, FileService.CreateForWriting(encryptedSize));
         fileWriteStream.Write(fileType);
@@ -105,7 +107,7 @@ public static class AesCbcEncryptionService
         // Set cipher
         var iv = new byte[16];
         fileReadStream.Read(iv, 0, 16);
-        var cipher = BufferedCipher(key, iv);
+        var cipher = InitCipherDecrypt(key, iv);
 
         // Prepare for decryption
         using var cipherStream = new CipherStream(fileReadStream, cipher, null);
@@ -113,13 +115,11 @@ public static class AesCbcEncryptionService
 
         if (FILE_TYPES.DIRECTORY == filetype)
         {
-            var filepath = "";
-            var isNewFile = true;
             long fileEndPos = 0;
 
             while (fileReadStream.Position < fileReadStream.Length)
             {
-                isNewFile = fileEndPos < fileReadStream.Position;
+                var isNewFile = fileEndPos < fileReadStream.Position;
 
                 if (isNewFile)
                 {
@@ -128,7 +128,7 @@ public static class AesCbcEncryptionService
                     var filename = Encoding.UTF8.GetString(buffer[..264].Where(b => b != 0).ToArray());
                     var filesize = BitConverter.ToInt64(buffer.AsSpan()[264..272]);
 
-                    filepath = Path.Combine(dir, filename);
+                    var filepath = Path.Combine(dir, filename);
                     fileEndPos = fileReadStream.Position + filesize;
 
                     FileService.CreateFileDirectories(filepath);
@@ -152,8 +152,7 @@ public static class AesCbcEncryptionService
                 {
                     fileWriteStream.Write(buffer, 0, bytesRead);
                     fileWriteStream.Close();
-
-                    filepath = String.Empty;
+                    
                     fileEndPos = 0;
 
                     continue;
@@ -178,17 +177,62 @@ public static class AesCbcEncryptionService
                 var bytesRead = cipherStream.Read(buffer, 0, bufferSize);
                 fileWriteStream.Write(buffer, 0 , bytesRead);
             }
+        }
+   
+        fileWriteStream?.Close();
+    }
 
-            fileWriteStream.Close();
+    public static byte[] Pbkdf2HashBytes(byte[] input)
+    {
+        if (input.Length == 0) return [];
+        
+        try
+        {
+            var salt = Encoding.UTF8.GetBytes(SALT);
+            var pbkdf2 = Rfc2898DeriveBytes.Pbkdf2(input, salt, 600000, HashAlgorithmName.SHA256, 256 / 8);
+
+            return pbkdf2;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return [];
+        }
+        finally
+        {
+            Array.Clear(input);
         }
     }
 
-    public static byte[] PBKDF2Hash(byte[] input)
+    public static byte[] Pbkdf2HashSecureString(SecureString input)
     {
-        var salt = Encoding.UTF8.GetBytes(SALT);
-        var pbkdf2 = Rfc2898DeriveBytes.Pbkdf2(input, salt, 600000, HashAlgorithmName.SHA256, 256 / 8);
+        if (input.Length == 0) return [];
+        
+        var bstr = Marshal.SecureStringToBSTR(input);
+        var length = Marshal.ReadInt32(bstr, -4);
+        var key = new byte[length];
+    
+        var keyPin = GCHandle.Alloc(key, GCHandleType.Pinned);
+        try
+        {
+            Marshal.Copy(bstr, key, 0, length);
+            Marshal.ZeroFreeBSTR(bstr);
 
-        return pbkdf2;
+            var salt = Encoding.UTF8.GetBytes(SALT);
+            var pbkdf2 = Rfc2898DeriveBytes.Pbkdf2(key, salt, 600000, HashAlgorithmName.SHA256, 256 / 8);
+
+            return pbkdf2;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return [];
+        }
+        finally 
+        {
+            Array.Clear(key);
+            keyPin.Free();
+        }
     }
 
     static int GetFileHeaderSize()
@@ -220,7 +264,7 @@ public static class AesCbcEncryptionService
         return type + files;
     }
 
-    static IBufferedCipher BufferedCipher(byte[] key, byte[] iv)
+    static IBufferedCipher InitCipherDecrypt(byte[] key, byte[] iv)
     {
         var cipher = CipherUtilities.GetCipher("AES/CBC/PKCS7Padding");
         cipher.Init(false, new ParametersWithIV(new KeyParameter(key), iv));
@@ -228,7 +272,7 @@ public static class AesCbcEncryptionService
         return cipher;
     }
 
-    static IBufferedCipher InitCipher(byte[] key, out byte[] iv)
+    static IBufferedCipher InitCipherEncrypt(byte[] key, out byte[] iv)
     {
         SecureRandom random = new();
 
@@ -243,8 +287,8 @@ public static class AesCbcEncryptionService
 
     static FILE_TYPES GetDecryptedFiletype(byte[] filetypeEncrypted, byte[] key)
     {
-        byte[] filetypeDecrypted = DecryptBytes(filetypeEncrypted, key);
-        int filetype = BitConverter.ToInt32(filetypeDecrypted, 0);
+        var filetypeDecrypted = DecryptBytes(filetypeEncrypted, key);
+        var filetype = BitConverter.ToInt32(filetypeDecrypted, 0);
 
         return filetype switch
         {
@@ -256,7 +300,7 @@ public static class AesCbcEncryptionService
 
     static byte[] CreateEncryptedFiletypeBytes(byte[] key, FILE_TYPES filetype)
     {
-        var cipher = InitCipher(key, out byte[] iv);
+        var cipher = InitCipherEncrypt(key, out byte[] iv);
         var encrypted = cipher.DoFinal(BitConverter.GetBytes((int)filetype));
 
         return ArrayUtils.UniteByteArrays(iv, encrypted);

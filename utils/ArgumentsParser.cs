@@ -12,10 +12,10 @@ public static class ArgumentParser
 
         foreach (string arg in args)
         {
-            string[] keyValue = arg.Split(":", 2);
+            var keyValue = arg.Split(":", 2);
 
-            string key = keyValue[0].ToLower();
-            string value = keyValue.Length == 2 ? keyValue[1] : "";
+            var key = keyValue[0].ToLower();
+            var value = keyValue.Length == 2 ? keyValue[1] : "";
 
             if (!arguments.AllowedArguments.Contains(key)) continue;
 
@@ -28,7 +28,7 @@ public static class ArgumentParser
                     arguments.Dir = value;
                     break;
                 case "password":
-                    arguments.Password = AesCbcEncryptionService.PBKDF2Hash(Encoding.UTF8.GetBytes(value));
+                    arguments.Password = AesCbcEncryptionService.Pbkdf2HashBytes(Encoding.UTF8.GetBytes(value));
                     break;
                 case "action":
                     if (!Enum.TryParse<AllowedArgumentsActions>(value, true, out AllowedArgumentsActions parsedValue)) break;
@@ -36,6 +36,8 @@ public static class ArgumentParser
                     break;
             }
         }
+        
+        Array.Clear(args);
 
         return arguments;
     }

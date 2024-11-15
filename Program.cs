@@ -1,8 +1,8 @@
-﻿using EncryptionTool.cmd;
+﻿using System.Security;
+using EncryptionTool.cmd;
 using EncryptionTool.models;
 using EncryptionTool.services;
 using EncryptionTool.utils;
-using System.Text;
 
 Arguments arguments = ArgumentParser.GetParsedArguments(args);
 
@@ -53,7 +53,7 @@ while (cliActive)
     var path = inputSplit[1].Trim();
 
     // Validate action
-    if (!Enum.TryParse<AllowedArgumentsActions>(action, true, out AllowedArgumentsActions parsedValue))
+    if (!Enum.TryParse(action, true, out AllowedArgumentsActions parsedValue))
     {
         Console.WriteLine("Invalid command");
         continue;
@@ -81,9 +81,15 @@ while (cliActive)
     }
 
     // Get key and perform
-    Console.Write("Enter password: ");
+    var key = GetHashedKeyFromConsole();
 
-    arguments.Password = AesCbcEncryptionService.PBKDF2Hash(Encoding.UTF8.GetBytes(Console.ReadLine()));
+    if (key.Length == 0)
+    {
+        Console.WriteLine("something went wrong with the password");
+        continue;
+    }
+
+    arguments.Password = key;
     ActOnInputs(arguments);
 }
 
@@ -118,6 +124,37 @@ static bool ActOnInputs(Arguments arguments)
     {
         arguments.Clear();
     }
+}
+
+static byte[] GetHashedKeyFromConsole()
+{
+    Console.Write("Enter password: ");
+    SecureString password = new();
+    ConsoleKeyInfo key;
+
+    do
+    {
+        key = Console.ReadKey(true);
+
+        if (!char.IsControl(key.KeyChar))
+        {
+            password.AppendChar(key.KeyChar);
+            Console.Write("*");
+        }
+        else
+        {
+            if (key.Key == ConsoleKey.Backspace && password.Length > 0)
+            {
+                password.RemoveAt(password.Length - 1);
+                Console.Write("\b \b");
+            }
+        }
+    }
+    while (key.Key != ConsoleKey.Enter);
+    
+    Console.Write("\n");
+
+    return AesCbcEncryptionService.Pbkdf2HashSecureString(password);
 }
 
 static void CLIWriteStartText()
