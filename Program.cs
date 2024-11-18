@@ -6,11 +6,16 @@ using EncryptionTool.utils;
 
 var arguments = ArgumentParser.GetParsedArguments(args);
 
-if (arguments is { Action: not null, Path.Count: > 0, Password.Length: > 0 })
+if (arguments is { Action: not null, Path.Count: > 0 })
 {
-    if (ActOnInputs(arguments))
+    if (arguments.Password.Length > 0 && ActOnInputs(arguments)) return;
+    if (arguments.Password.Length == 0)
     {
-        return;
+        var key = GetHashedKeyFromConsole();
+        arguments.Password = key;
+
+        if (key.Length == 0) Console.WriteLine("Something went wrong with the password");
+        if (key.Length > 0 && ActOnInputs(arguments)) return;
     }
 }
 arguments.Clear();
@@ -25,7 +30,7 @@ while (cliActive)
     Console.Write("\nEnter command: ");
     input = Console.ReadLine() ?? "";
 
-    if (input == "q") 
+    if (input == "q")
     { 
         cliActive = false;
         continue;
