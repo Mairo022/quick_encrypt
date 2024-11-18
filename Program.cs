@@ -4,12 +4,9 @@ using EncryptionTool.models;
 using EncryptionTool.services;
 using EncryptionTool.utils;
 
-Arguments arguments = ArgumentParser.GetParsedArguments(args);
+var arguments = ArgumentParser.GetParsedArguments(args);
 
-if (arguments.Action != null 
-    && (arguments.File != string.Empty || arguments.Dir != string.Empty) 
-    && arguments.Password.Length > 0
-    )
+if (arguments is { Action: not null, Path.Count: > 0, Password.Length: > 0 })
 {
     if (ActOnInputs(arguments))
     {
@@ -50,7 +47,7 @@ while (cliActive)
     }
 
     var action = inputSplit[0];
-    var path = inputSplit[1].Trim();
+    var pathString = inputSplit[1].Trim();
 
     // Validate action
     if (!Enum.TryParse(action, true, out AllowedArgumentsActions parsedValue))
@@ -61,25 +58,16 @@ while (cliActive)
     arguments.Action = parsedValue;
 
     // Validate path
-    if (File.Exists(path))
+    foreach (var path in ArgumentParser.ExtractPaths(pathString))
     {
-        arguments.File = path;
+        arguments.AddPath(path);
     }
-    else if (Directory.Exists(path))
+    
+    if (arguments.Path.Count == 0)
     {
-        if (!Directory.EnumerateFileSystemEntries(path).Any())
-        {
-            Console.WriteLine("Directory is empty");
-            continue;
-        }
-        arguments.Dir = path;
-    }
-    else
-    {
-        Console.WriteLine($"Invalid filepath or directory: {path}");
         continue;
     }
-
+    
     // Get key and perform
     var key = GetHashedKeyFromConsole();
 
@@ -93,21 +81,16 @@ while (cliActive)
     ActOnInputs(arguments);
 }
 
+return;
+
 static bool ActOnInputs(Arguments arguments)
 {
     try
     {
         Console.WriteLine($"Starting {arguments.Action}ion");
 
-        if (AllowedArgumentsActions.encrypt == arguments.Action)
-        {
-            if (arguments.File != String.Empty) EncryptionCommands.EncryptFile(arguments);
-            else if (arguments.Dir != String.Empty) EncryptionCommands.EncryptDirectory(arguments);
-        }
-        else if (AllowedArgumentsActions.decrypt == arguments.Action)
-        {
-            EncryptionCommands.DecryptFile(arguments);
-        }
+        if (AllowedArgumentsActions.encrypt == arguments.Action) Commands.Encrypt(arguments);
+        if (AllowedArgumentsActions.decrypt == arguments.Action) Commands.Decrypt(arguments);
 
         Console.WriteLine($"{StringUtils.FirstLetterToUpper(arguments.Action.ToString()) ?? ""}ion successful");
 

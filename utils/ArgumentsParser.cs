@@ -10,7 +10,7 @@ public static class ArgumentParser
     {
         Arguments arguments = new();
 
-        foreach (string arg in args)
+        foreach (var arg in args)
         {
             var keyValue = arg.Split(":", 2);
 
@@ -21,17 +21,14 @@ public static class ArgumentParser
 
             switch (key)
             {
-                case "file":
-                    arguments.File = value;
-                    break;
-                case "dir":
-                    arguments.Dir = value;
+                case "path":
+                    foreach (var path in ExtractPaths(value)) arguments.AddPath(path);
                     break;
                 case "password":
                     arguments.Password = AesCbcEncryptionService.Pbkdf2HashBytes(Encoding.UTF8.GetBytes(value));
                     break;
                 case "action":
-                    if (!Enum.TryParse<AllowedArgumentsActions>(value, true, out AllowedArgumentsActions parsedValue)) break;
+                    if (!Enum.TryParse(value, true, out AllowedArgumentsActions parsedValue)) break;
                     arguments.Action = parsedValue;
                     break;
             }
@@ -40,6 +37,21 @@ public static class ArgumentParser
         Array.Clear(args);
 
         return arguments;
+    }
+
+    public static string[] ExtractPaths(string pathsString)
+    {
+        var pathsSplit = pathsString.Split(';');
+        var paths = new string[pathsSplit.Length];
+        var i = 0;
+        
+        foreach (var path in pathsSplit)
+        {
+            paths[i] = path;
+            i++;
+        }
+
+        return paths;
     }
 }
 

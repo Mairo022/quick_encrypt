@@ -8,17 +8,29 @@ public enum AllowedArgumentsActions
 
 public class Arguments()
 {
+    readonly List<string> _path = [];
+    
     public AllowedArgumentsActions? Action { get; set; } = null;
-    public string File { get; set; } = string.Empty;
-    public string Dir { get; set; } = string.Empty;
+    public IReadOnlyList<string> Path => _path;
     public byte[] Password { get; set; } = [];
 
-    public readonly string[] AllowedArguments = ["action", "file", "dir", "password"];
+    public readonly string[] AllowedArguments = ["action", "path", "password"];
 
     public void Clear()
     {
-        this.Action = null;
-        this.File = string.Empty;
-        Array.Clear(this.Password);
+        Action = null;
+        Array.Clear(Password);
+        _path.Clear();
+    }
+
+    public void AddPath(string path)
+    {
+        if (File.Exists(path) || Directory.Exists(path))
+        {
+            _path.Add(path);
+            return;
+        }
+
+        Console.WriteLine($"Invalid path: {path}");
     }
 }
