@@ -1,17 +1,7 @@
-﻿namespace EncryptionTool.services;
+﻿namespace EncryptionTool.utils;
 
-public static class FileService
+public static class FileUtils
 {
-    static byte[] ReadFile(string filepath)
-    {
-        return File.ReadAllBytes(filepath);
-    }
-
-    static void WriteFile(string filepath, byte[] data)
-    {
-        File.WriteAllBytes(filepath, data);
-    }
-
     public static string GetUniqueFilepath(string filepath)
     {
         if (!File.Exists(filepath)) return filepath;
@@ -51,5 +41,20 @@ public static class FileService
             Access = FileAccess.Write,
             PreallocationSize = allocSize
         };
+    }
+    
+    public static bool IsFileInUse(FileInfo file)
+    {
+        if (!File.Exists(file.FullName)) return false;
+        
+        try
+        {
+            using var stream = file.Open(FileMode.Open, FileAccess.Read, FileShare.None);
+        }
+        catch (IOException)
+        {
+            return true;
+        }
+        return false;
     }
 }

@@ -2,6 +2,7 @@
 
 public enum AllowedArgumentsActions
 {
+    unknown,
     encrypt,
     decrypt
 }

@@ -46,14 +46,14 @@ public static class AesCbcEncryptionService
         var filenames = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories);
         var parentDir = Directory.GetParent(dir).ToString();
         var outputFilepath = Path.Combine(parentDir, Path.GetFileName(dir) + ".bin");
-        outputFilepath = FileService.GetUniqueFilepath(outputFilepath);
+        outputFilepath = FileUtils.GetUniqueFilepath(outputFilepath);
         
         long encryptedSize = GetTotalEncryptedFilesSize(filenames);
         var fileType = CreateEncryptedFiletypeBytes(key, FILE_TYPES.DIRECTORY);
 
         var cipher = InitCipherEncrypt(key, out byte[] iv);
 
-        using var fileWriteStream = new FileStream(outputFilepath, FileService.CreateForWriting(encryptedSize));
+        using var fileWriteStream = new FileStream(outputFilepath, FileUtils.CreateForWriting(encryptedSize));
         fileWriteStream.Write(fileType);
         fileWriteStream.Write(iv);
 
@@ -131,11 +131,11 @@ public static class AesCbcEncryptionService
                     var filepath = Path.Combine(dir, filename);
                     fileEndPos = fileReadStream.Position + filesize;
 
-                    FileService.CreateFileDirectories(filepath);
-                    filepath = FileService.GetUniqueFilepath(filepath);
+                    FileUtils.CreateFileDirectories(filepath);
+                    filepath = FileUtils.GetUniqueFilepath(filepath);
 
                     // TODO: Create some sort of safety, in case file is read wrong
-                    fileWriteStream = new(filepath, FileService.CreateForWriting(fileEndPos - fileReadStream.Position));
+                    fileWriteStream = new(filepath, FileUtils.CreateForWriting(fileEndPos - fileReadStream.Position));
                 }
 
                 // Read either buffer size or amount to end of file (that is rounded to 16 byte block)
@@ -167,10 +167,10 @@ public static class AesCbcEncryptionService
             var filepath = fPath;
             var filesize = new FileInfo(filepath).Length - GetFileHeaderSize() - 48;
 
-            if (filepath[^4..] != ".bin") filepath = FileService.GetUniqueFilepath(filepath);
-            else filepath = FileService.GetUniqueFilepath(filepath[..^4]);
+            if (filepath[^4..] != ".bin") filepath = FileUtils.GetUniqueFilepath(filepath);
+            else filepath = FileUtils.GetUniqueFilepath(filepath[..^4]);
 
-            fileWriteStream = new(filepath, FileService.CreateForWriting(filesize - fileReadStream.Position));
+            fileWriteStream = new(filepath, FileUtils.CreateForWriting(filesize - fileReadStream.Position));
 
             while (fileReadStream.Position < fileReadStream.Length)
             {

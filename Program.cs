@@ -5,6 +5,7 @@ using EncryptionTool.services;
 using EncryptionTool.utils;
 
 var arguments = ArgumentParser.GetParsedArguments(args);
+var config = new ConfigService();
 
 if (arguments is { Action: not null, Path.Count: > 0 })
 {
@@ -40,6 +41,71 @@ while (cliActive)
     {
         Console.Clear();
         CLIWriteStartText();
+        continue;
+    }
+    
+    if (input.StartsWith('g'))
+    {
+        input = input.Trim();
+        
+        if (input == "g")
+        {
+            config.CliExample();
+            continue;
+        }
+
+        var groupCommand = config.CliFormatCommand(input);
+
+        switch (groupCommand.Action)
+        {
+            case GroupAction.Execute:
+                foreach (var path in groupCommand.Paths) arguments.AddPath(path);
+
+                if (arguments.Path.Count == 0)
+                {
+                    Console.WriteLine("No valid path provided");
+                    continue;
+                }
+                
+                var keyGroup = GetHashedKeyFromConsole();
+
+                if (keyGroup.Length == 0)
+                {
+                    Console.WriteLine("Something went wrong with the password");
+                    continue;
+                }
+                
+                arguments.Action = groupCommand.Process;
+                arguments.Password = keyGroup;
+                
+                ActOnInputs(arguments);
+                break;
+            
+            case GroupAction.Save:
+                Console.WriteLine(config.SaveGroup(groupCommand)
+                    ? $"Group {groupCommand.Name} is saved"
+                    : $"Group {groupCommand.Name} failed to save");
+                break;
+            
+            case GroupAction.Delete:
+                Console.WriteLine(config.DeleteGroup(groupCommand.Name)
+                    ? $"Group {groupCommand.Name} is removed"
+                    : $"Group {groupCommand.Name} is not removed");
+                break;
+            
+            case GroupAction.Info:
+                config.PrintGroup(groupCommand.Name);
+                break;
+            
+            case GroupAction.List:
+                config.PrintAllGroups();
+                break;
+            
+            default:
+                Console.WriteLine("Something is wrong with the group");
+                break;
+        }
+        
         continue;
     }
 
@@ -151,6 +217,7 @@ static void CLIWriteStartText()
     Console.WriteLine("1. encrypt [path]");
     Console.WriteLine("2. decrypt [path]");
     Console.WriteLine("q - quit the program");
+    Console.WriteLine("g - create a group");
     Console.WriteLine("c - clear console\n");
     Console.WriteLine("Example: encrypt /path/to/directory");
 }
