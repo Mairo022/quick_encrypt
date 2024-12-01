@@ -165,7 +165,7 @@ public static class AesCbcEncryptionService
         if (FILE_TYPES.FILE == filetype)
         {
             var filepath = fPath;
-            var filesize = new FileInfo(filepath).Length - GetFileHeaderSize() - 48;
+            var filesize = new FileInfo(filepath).Length - 48;
 
             if (filepath[^4..] != ".bin") filepath = FileUtils.GetUniqueFilepath(filepath);
             else filepath = FileUtils.GetUniqueFilepath(filepath[..^4]);
