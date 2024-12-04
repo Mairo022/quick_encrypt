@@ -48,12 +48,13 @@ public static class AesCbcEncryptionService
         var outputFilepath = Path.Combine(parentDir, Path.GetFileName(dir) + ".bin");
         outputFilepath = FileUtils.GetUniqueFilepath(outputFilepath);
         
-        long encryptedSize = GetTotalEncryptedFilesSize(filenames);
+        long encryptedSize = GetTotalEncryptedFilesSize(filenames, parentDir);
         var fileType = CreateEncryptedFiletypeBytes(key, FILE_TYPES.DIRECTORY);
 
         var cipher = InitCipherEncrypt(key, out byte[] iv);
-
+        
         using var fileWriteStream = new FileStream(outputFilepath, FileUtils.CreateForWriting(encryptedSize));
+        
         fileWriteStream.Write(fileType);
         fileWriteStream.Write(iv);
 
@@ -64,9 +65,11 @@ public static class AesCbcEncryptionService
             var filenameRelativeToParent = filename[(parentDir.Length+1)..];
             
             // Set file header
-            var filepath = Encoding.UTF8.GetBytes(filenameRelativeToParent).Concat(new byte[264 - filenameRelativeToParent.Length]).ToArray();
+            var filepath = Encoding.UTF8.GetBytes(filenameRelativeToParent);
+            var filepathSize = BitConverter.GetBytes(filepath.Length);
             var fileSize = BitConverter.GetBytes(new FileInfo(filename).Length);
-            var fileHeader = ArrayUtils.UniteByteArrays(filepath, fileSize);
+            
+            var fileHeader = ArrayUtils.UniteByteArrays(fileSize, filepathSize, filepath);
 
             var encrypted = cipher.ProcessBytes(fileHeader);
             fileWriteStream.Write(encrypted);
@@ -115,6 +118,7 @@ public static class AesCbcEncryptionService
 
         if (FILE_TYPES.DIRECTORY == filetype)
         {
+            var encryptedFileSize = new FileInfo(fPath).Length;
             long fileEndPos = 0;
 
             while (fileReadStream.Position < fileReadStream.Length)
@@ -123,19 +127,24 @@ public static class AesCbcEncryptionService
 
                 if (isNewFile)
                 {
-                    cipherStream.Read(buffer, 0, GetFileHeaderSize());
-
-                    var filename = Encoding.UTF8.GetString(buffer[..264].Where(b => b != 0).ToArray());
-                    var filesize = BitConverter.ToInt64(buffer.AsSpan()[264..272]);
-
+                    cipherStream.Read(buffer, 0, 12);
+                    
+                    var filesize = BitConverter.ToInt64(buffer.AsSpan()[..8]);
+                    var filenameSize = BitConverter.ToInt32(buffer[8..12]);
+                    
+                    cipherStream.Read(buffer, 0, filenameSize);
+                    
+                    var filename = Encoding.UTF8.GetString(buffer[..filenameSize]);
                     var filepath = Path.Combine(dir, filename);
                     fileEndPos = fileReadStream.Position + filesize;
 
                     FileUtils.CreateFileDirectories(filepath);
                     filepath = FileUtils.GetUniqueFilepath(filepath);
 
-                    // TODO: Create some sort of safety, in case file is read wrong
-                    fileWriteStream = new(filepath, FileUtils.CreateForWriting(fileEndPos - fileReadStream.Position));
+                    if (filesize <= 0 || filesize > encryptedFileSize) 
+                        throw new Exception("Error reading file size");
+                    
+                    fileWriteStream = new(filepath, FileUtils.CreateForWriting(filesize));
                 }
 
                 // Read either buffer size or amount to end of file (that is rounded to 16 byte block)
@@ -144,9 +153,7 @@ public static class AesCbcEncryptionService
                 var bytesRead = cipherStream.Read(buffer, 0, Math.Min(bufferSize, bytesToFileEnd));
 
                 if (fileWriteStream == null) 
-                { 
                     throw new Exception("File write stream not initialised before writing");
-                }
 
                 if (bytesToFileEnd == bytesRead)
                 {
@@ -235,31 +242,34 @@ public static class AesCbcEncryptionService
         }
     }
 
-    static int GetFileHeaderSize()
+    static long GetTotalEncryptedFilesSize(string[] filepaths, string? parentDir)
     {
-        // Windows limit is 260, +4 is a filler
-        var path = 264;
-        var fileSize = sizeof(long);
+        if (filepaths.Length == 0) return 0;
 
-        if ((path + fileSize) % 16 != 0) throw new Exception("File header size is not a multiple of CBC block size");
-
-        return path + fileSize;
-    }
-
-    static long GetTotalEncryptedFilesSize(string[] filepaths)
-    {
+        var getRelativePathLength = (string filepath) =>
+            parentDir == null
+                ? Encoding.UTF8.GetBytes(filepath).Length
+                : Encoding.UTF8.GetBytes(Path.GetRelativePath(parentDir, filepath)).Length;
+        
         // filetype
-        var typeIV = 16;
+        var typeIv = 16;
         var typeVal = 16;
-        var type = typeIV + typeVal;
+        var type = typeIv + typeVal;
 
         // file
         var iv = 16;
-        var header = GetFileHeaderSize(); // 272
+        var size = 8;
+        var path = 4;
         var padding = 16 - 1;
 
         // files
-        var files = iv + filepaths.Sum(filename => header + new FileInfo(filename).Length) + padding;
+        var files = iv + filepaths.Sum(filename => 
+                           size + 
+                           path + 
+                           getRelativePathLength(filename) + 
+                           new FileInfo(filename).Length
+                           ) 
+                       + padding;
 
         return type + files;
     }
