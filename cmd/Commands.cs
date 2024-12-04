@@ -9,21 +9,12 @@ public static class Commands
     {
         foreach (var path in arguments.Path)
         {
-            if (File.Exists(path))
-            {
-                var file = File.ReadAllBytes(path);
-                var fileEncrypted = AesCbcEncryptionService.EncryptBytes(file, arguments.Password);
-
-                File.WriteAllBytes(path + ".bin", fileEncrypted);
-            }
-            else if (Directory.Exists(path))
-            {
+            if (File.Exists(path)) 
+                AesCbcEncryptionService.EncryptFile(path, arguments.Password);
+            else if (Directory.Exists(path)) 
                 AesCbcEncryptionService.EncryptDirectory(path, arguments.Password);
-            }
-            else
-            {
+            else 
                 Console.WriteLine($"Invalid path: {path}");
-            }
         }
     }
 

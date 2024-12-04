@@ -13,22 +13,29 @@ namespace EncryptionTool.services;
 
 public static class AesCbcEncryptionService
 {
-    public static byte[] EncryptBytes(byte[] input, byte[] key)
+    public static void EncryptFile(string filepath, byte[] key)
     {
-        var cipher = InitCipherEncrypt(key, out byte[] iv);
+        var outputFilepath = FileUtils.GetUniqueFilepath($"{filepath}.bin");
+        var cipher = InitCipherEncrypt(key, out var iv);
+        
         var fileType = CreateEncryptedFiletypeBytes(key, FILE_TYPES.FILE);
+        var encryptedSize = fileType.Length + 16 + new FileInfo(filepath).Length;
+        
+        using var fileReadStream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
+        using var fileWriteStream = new FileStream(outputFilepath, FileUtils.CreateForWriting(encryptedSize));
+        using var cipherStream = new CipherStream(fileWriteStream, null, cipher);
+        
+        fileWriteStream.Write(fileType, 0, fileType.Length);
+        fileWriteStream.Write(iv, 0, iv.Length);
 
-        using var combinedStream = new MemoryStream();
+        var bufferSize = 1024;
+        var buffer = new byte[bufferSize];
+        
+        while (fileReadStream.Position < fileReadStream.Length)
         {
-            using var binaryWriter = new BinaryWriter(combinedStream);
-            {
-                binaryWriter.Write(fileType);
-                binaryWriter.Write(iv);
-                binaryWriter.Write(cipher.DoFinal(input));
-            }
-
-            return combinedStream.ToArray();
-        }   
+            var bytesRead = fileReadStream.Read(buffer, 0, bufferSize);
+            cipherStream.Write(buffer, 0, bytesRead);
+        }
     }
 
     public static byte[] DecryptBytes(byte[] encryptedBytes, byte[] key)
