@@ -148,7 +148,7 @@ public static class AesCbcEncryptionService
                     FileUtils.CreateFileDirectories(filepath);
                     filepath = FileUtils.GetUniqueFilepath(filepath);
 
-                    if (filesize <= 0 || filesize > encryptedFileSize) 
+                    if (filesize < 0 || filesize > encryptedFileSize)
                         throw new Exception("Error reading file size");
                     
                     fileWriteStream = new(filepath, FileUtils.CreateForWriting(filesize));
