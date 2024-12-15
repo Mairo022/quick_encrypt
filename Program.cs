@@ -4,8 +4,8 @@ using EncryptionTool.models;
 using EncryptionTool.services;
 using EncryptionTool.utils;
 
-var arguments = ArgumentParser.GetParsedArguments(args);
-var config = new ConfigService();
+var arguments = ArgumentParser.GetParsedArguments(args, out var config);
+config = null ?? new ConfigService();
 
 if (arguments is { Action: not null, Path.Count: > 0 })
 {

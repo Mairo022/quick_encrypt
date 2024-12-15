@@ -6,9 +6,10 @@ namespace EncryptionTool.utils;
 
 public static class ArgumentParser
 {
-    public static Arguments GetParsedArguments(string[] args)
+    public static Arguments GetParsedArguments(string[] args, out ConfigService? config)
     {
         Arguments arguments = new();
+        config = null;
 
         foreach (var arg in args)
         {
@@ -31,8 +32,19 @@ public static class ArgumentParser
                     if (!Enum.TryParse(value, true, out AllowedArgumentsActions parsedValue)) break;
                     arguments.Action = parsedValue;
                     break;
+                case "group":
+                    config = new ConfigService();
+                    var group = config.GetGroup(value);
+                    
+                    if (group == null) break;
+
+                    arguments.Action = group.Action;
+                    foreach (var path in group.Paths) arguments.AddPath(path);
+                    
+                    goto AfterParsing;
             }
         }
+        AfterParsing:
         
         Array.Clear(args);
 

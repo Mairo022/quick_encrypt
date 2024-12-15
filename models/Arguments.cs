@@ -15,7 +15,7 @@ public class Arguments()
     public IReadOnlyList<string> Path => _path;
     public byte[] Password { get; set; } = [];
 
-    public readonly string[] AllowedArguments = ["action", "path", "password"];
+    public readonly string[] AllowedArguments = ["action", "path", "password", "group"];
 
     public void Clear()
     {

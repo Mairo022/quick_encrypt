@@ -253,7 +253,12 @@ public class ConfigService
             return false;
         }
     }
-    
+
+    public GroupItem? GetGroup(string groupName)
+    {
+        return Groups.GetValueOrDefault(groupName);
+    }
+
     public void PrintGroup(string groupName)
     {
         Console.WriteLine();
