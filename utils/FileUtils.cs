@@ -57,4 +57,38 @@ public static class FileUtils
         }
         return false;
     }
+
+    public static void OverwriteAndDeleteDirectory(DirectoryInfo directory)
+    {
+        ArgumentNullException.ThrowIfNull(directory);
+        
+        var files = Directory.GetFiles(directory.FullName, "*.*", SearchOption.AllDirectories);
+
+        foreach (var file in files)
+        {
+            OverwriteAndDeleteFile(new FileInfo(file));
+        }
+        
+        directory.Delete(true);
+    }
+
+    public static void OverwriteAndDeleteFile(FileInfo file)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+        
+        using var stream = new FileStream(file.FullName, FileMode.Open, FileAccess.Write);
+
+        var bufferSize = 1024;
+        var fileSize = stream.Length;
+        var buffer = new byte[bufferSize];
+        Array.Fill(buffer, (byte) 0);
+
+        while (stream.Position < fileSize)
+        {
+            stream.Write(buffer, 0, (int) Math.Min(bufferSize, fileSize - stream.Position));
+        }
+        
+        stream.Close();
+        file.Delete();
+    }
 }

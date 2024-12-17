@@ -32,7 +32,7 @@ public class ConfigService
     void ReadGroups()
     {
         GroupItem group = new();
-        string[] groupKeys = ["paths", "action"];
+        string[] groupKeys = ["paths", "action", "delete"];
         
         var isGroupFilled = (GroupItem gr) => 
             gr.Action != AllowedArgumentsActions.unknown && gr.Paths.Count != 0;
@@ -67,16 +67,23 @@ public class ConfigService
                 
                 if (!groupKeys.Contains(key)) continue;
 
-                if (key == "action")
+                switch (key)
                 {
-                    if (!Enum.TryParse(value, true, out AllowedArgumentsActions parsedAction)) continue;
-                    group.Action = parsedAction;
-                }
-
-                if (key == "paths")
-                {
-                    var paths = value.Split(";");
-                    group.Paths.AddRange(paths);
+                    case "action":
+                    {
+                        if (!Enum.TryParse(value, true, out AllowedArgumentsActions parsedAction)) continue;
+                        group.Action = parsedAction;
+                        break;
+                    }
+                    case "paths":
+                    {
+                        var paths = value.Split(";");
+                        group.Paths.AddRange(paths);
+                        break;
+                    }
+                    case "delete":
+                        group.Delete = bool.TryParse(value, out var delete) && delete;
+                        break;
                 }
             }
             
@@ -98,10 +105,12 @@ public class ConfigService
                 var key = $"[{group.Key}]";
                 var action = $"action={group.Value.Action}";
                 var paths = "paths=" + string.Join(";", group.Value.Paths);
+                var delete = $"delete={group.Value.Delete}";
 
                 writer.WriteLine(key);
                 writer.WriteLine(action);
                 writer.WriteLine(paths);
+                writer.WriteLine(delete);
                 writer.WriteLine();
             }
             
@@ -138,6 +147,7 @@ public class ConfigService
         var name = inputSplit.Length > 1 ? inputSplit[1] : "";
         var actionOrFlag = inputSplit.Length > 2 ? inputSplit[2] : "";
         var paths = inputSplit.Length > 3 ? inputSplit[3] : "";
+        var delete = inputSplit.Length > 4 ? inputSplit[4] : "";
         
         if (input == "g --list")
         {
@@ -156,7 +166,7 @@ public class ConfigService
         
         groupCommand.Name = name;
         
-        if (inputSplit.Length is 3 or 4 && Enum.TryParse(actionOrFlag, true, out groupProcess));
+        if (inputSplit.Length >= 3 && Enum.TryParse(actionOrFlag, true, out groupProcess));
         
         switch (inputSplit.Length)
         {
@@ -166,6 +176,7 @@ public class ConfigService
                 groupCommand.Action = GroupAction.Execute;
                 groupCommand.Process = group.Action;
                 groupCommand.Paths.AddRange(group.Paths);
+                groupCommand.Delete = group.Delete;
 
                 break;
             
@@ -195,7 +206,7 @@ public class ConfigService
                 
                 break;
             
-            case 4:
+            case 4 or 5:
                 if (AllowedArgumentsActions.unknown == groupProcess)
                 {
                     Console.WriteLine("Invalid action");
@@ -205,6 +216,7 @@ public class ConfigService
                 groupCommand.Action = GroupAction.Save;
                 groupCommand.Process = groupProcess;
                 groupCommand.Paths.AddRange(paths.Split(';'));
+                groupCommand.Delete = bool.TryParse(delete, out var parsedDelete) && parsedDelete;
 
                 break;
         }
@@ -217,8 +229,8 @@ public class ConfigService
         Console.WriteLine();
         Console.WriteLine("Available group commands are: ");
         Console.WriteLine("1. Execute a group: g [group name]");
-        Console.WriteLine("2. Create a group: g [group name] [action] [paths]");
-        Console.WriteLine("3. Modify a group: g [group name] [action] [paths] (optional)");
+        Console.WriteLine("2. Create a group: g [group name] [action] [paths] [delete]");
+        Console.WriteLine("3. Modify a group: g [group name] [action] [paths](optional)");
         Console.WriteLine("4. Delete a group: g [group name] --delete");
         Console.WriteLine("5. View group info: g [group name] --info");
         Console.WriteLine("6. View all groups: g --list");
@@ -236,6 +248,7 @@ public class ConfigService
                 {
                     Action = groupCommand.Process, 
                     Paths = groupCommand.Paths,
+                    Delete = groupCommand.Delete
                 });
 
                 return WriteGroupsToFile();
@@ -244,6 +257,13 @@ public class ConfigService
             if (group == null) return false;
             
             group.Action = groupCommand.Process;
+            
+            if (groupCommand.Paths.Count > 0)
+            {
+                group.Paths.Clear();
+                group.Paths.AddRange(groupCommand.Paths);
+                group.Delete = groupCommand.Delete;
+            }
 
             return WriteGroupsToFile();
         }
@@ -264,6 +284,7 @@ public class ConfigService
         Console.WriteLine();
         Console.WriteLine($"Group: {groupName}");
         Console.WriteLine($"Action: {Groups[groupName].Action}");
+        Console.WriteLine($"Delete original files: {Groups[groupName].Delete}");
         Console.WriteLine("Paths:");
         
         foreach (var path in Groups[groupName].Paths)

@@ -77,6 +77,7 @@ while (cliActive)
                 
                 arguments.Action = groupCommand.Process;
                 arguments.Password = keyGroup;
+                arguments.Delete = groupCommand.Delete;
                 
                 ActOnInputs(arguments);
                 break;

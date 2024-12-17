@@ -32,6 +32,9 @@ public static class ArgumentParser
                     if (!Enum.TryParse(value, true, out AllowedArgumentsActions parsedValue)) break;
                     arguments.Action = parsedValue;
                     break;
+                case "delete":
+                    arguments.Delete = bool.TryParse(value, out var parsedDelete) && parsedDelete;
+                    break;
                 case "group":
                     config = new ConfigService();
                     var group = config.GetGroup(value);
@@ -39,6 +42,7 @@ public static class ArgumentParser
                     if (group == null) break;
 
                     arguments.Action = group.Action;
+                    arguments.Delete = group.Delete;
                     foreach (var path in group.Paths) arguments.AddPath(path);
                     
                     goto AfterParsing;
