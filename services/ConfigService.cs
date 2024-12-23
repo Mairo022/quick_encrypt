@@ -35,7 +35,7 @@ public class ConfigService
         string[] groupKeys = ["paths", "action", "delete"];
         
         var isGroupFilled = (GroupItem gr) => 
-            gr.Action != AllowedArgumentsActions.unknown && gr.Paths.Count != 0;
+            gr.Action != CommandAction.unknown && gr.Paths.Count != 0;
 
         using var reader = new StreamReader(File.OpenRead(_groupsFilePath));
         
@@ -71,14 +71,13 @@ public class ConfigService
                 {
                     case "action":
                     {
-                        if (!Enum.TryParse(value, true, out AllowedArgumentsActions parsedAction)) continue;
+                        if (!Enum.TryParse(value, true, out CommandAction parsedAction)) continue;
                         group.Action = parsedAction;
                         break;
                     }
                     case "paths":
                     {
-                        var paths = value.Split(";");
-                        group.Paths.AddRange(paths);
+                        group.AddPaths(value.Split(";"));
                         break;
                     }
                     case "delete":
@@ -139,9 +138,9 @@ public class ConfigService
         }
     }
 
-    public GroupCommand CliFormatCommand(string input)
+    public GroupCommand CliFormatGroupCommand(string input)
     {
-        if (input == "g --list") return new GroupCommand{ Action = GroupAction.List };
+        if (input == "g --list") return new GroupCommand{ GroupAction = GroupAction.List };
         
         var inputSplit = input.Split(" ");
         if (inputSplit.Length < 2) return new GroupCommand();
@@ -160,15 +159,15 @@ public class ConfigService
         if (groupExists && group != null)
         {
             groupCommand.Name = name;
-            groupCommand.Process = group.Action;
-            groupCommand.Paths.AddRange(group.Paths);
+            groupCommand.Action = group.Action;
+            groupCommand.AddPaths(group.Paths);
             groupCommand.Delete = group.Delete;
         }
         
         switch (inputSplit.Length)
         {
             case 2:
-                groupCommand.Action = GroupAction.Execute;
+                groupCommand.GroupAction = GroupAction.Execute;
                 break;
             case 3:
                 var isFlag = inputSplit[2].StartsWith("--");
@@ -178,8 +177,8 @@ public class ConfigService
                     var flag = inputSplit[2];
                     if (!flags.Contains(flag)) break;
                     
-                    if (flag == "--delete") groupCommand.Action = GroupAction.Delete;
-                    if (flag == "--info") groupCommand.Action = GroupAction.Info;
+                    if (flag == "--delete") groupCommand.GroupAction = GroupAction.Delete;
+                    if (flag == "--info") groupCommand.GroupAction = GroupAction.Info;
 
                     break;
                 }
@@ -194,22 +193,22 @@ public class ConfigService
                     
                     if (!properties.Contains(property)) break;
 
-                    if ("action" == property && Enum.TryParse(value, true, out AllowedArgumentsActions parsedKvpAction))
+                    if ("action" == property && Enum.TryParse(value, true, out CommandAction parsedKvpAction))
                     {
-                        groupCommand.Action = GroupAction.Save;
-                        groupCommand.Process = parsedKvpAction;
+                        groupCommand.GroupAction = GroupAction.Save;
+                        groupCommand.Action = parsedKvpAction;
                     }
                     
                     if ("delete" == property && bool.TryParse(value, out var parsedDelete))
                     {
-                        groupCommand.Action = GroupAction.Save;
+                        groupCommand.GroupAction = GroupAction.Save;
                         groupCommand.Delete = parsedDelete;
                     }
 
                     if ("paths" == property)
                     {
-                        groupCommand.Action = GroupAction.Save;
-                        groupCommand.Paths.AddRange(value.Split(';'));
+                        groupCommand.GroupAction = GroupAction.Save;
+                        groupCommand.AddPaths(value.Split(';'));
                     }
                 }
 
@@ -219,12 +218,12 @@ public class ConfigService
                 var paths = inputSplit[3];
                 var delete = inputSplit.ElementAtOrDefault(4) ?? bool.FalseString;
 
-                if (!Enum.TryParse(action, true, out AllowedArgumentsActions parsedAction)) break;
+                if (!Enum.TryParse(action, true, out CommandAction parsedAction)) break;
 
-                groupCommand.Action = GroupAction.Save;
-                groupCommand.Process = parsedAction;
+                groupCommand.GroupAction = GroupAction.Save;
+                groupCommand.Action = parsedAction;
                 groupCommand.Name = name;
-                groupCommand.Paths.AddRange(paths.Split(';'));
+                groupCommand.AddPaths(paths.Split(';'));
                 groupCommand.Delete = bool.TryParse(delete, out var parsedDelete2) && parsedDelete2;
                 
                 break;
@@ -254,24 +253,23 @@ public class ConfigService
         {
             if (!groupExists || (group == null && groupCommand.Paths.Count > 0))
             {
-                Groups.Add(groupCommand.Name, new GroupItem
-                {
-                    Action = groupCommand.Process, 
-                    Paths = groupCommand.Paths,
+                group = new GroupItem{
+                    Action = groupCommand.Action, 
                     Delete = groupCommand.Delete
-                });
+                };
+                group.AddPaths(groupCommand.Paths);
 
                 return WriteGroupsToFile();
             }
 
             if (group == null) return false;
             
-            group.Action = groupCommand.Process;
+            group.Action = groupCommand.Action;
             
             if (groupCommand.Paths.Count > 0)
             {
-                group.Paths.Clear();
-                group.Paths.AddRange(groupCommand.Paths);
+                group.ClearPaths();
+                group.AddPaths(groupCommand.Paths);
                 group.Delete = groupCommand.Delete;
             }
 
@@ -292,14 +290,18 @@ public class ConfigService
     public void PrintGroup(string groupName)
     {
         Console.WriteLine();
-        Console.WriteLine($"Group: {groupName}");
+        Console.WriteLine($"{groupName}");
+        Console.WriteLine($"{new string('-', groupName.Length)}");
         Console.WriteLine($"Action: {Groups[groupName].Action}");
-        Console.WriteLine($"Delete original files: {Groups[groupName].Delete}");
-        Console.WriteLine("Paths:");
-        
+        Console.WriteLine($"Delete original: {Groups[groupName].Delete}");
+        Console.Write("Paths: ");
+
+        var i = 0;
         foreach (var path in Groups[groupName].Paths)
         {
-            Console.WriteLine(path);
+            if (i == 0) Console.WriteLine(path);
+            else Console.WriteLine("       " + path);
+            i++;
         }
     }
 

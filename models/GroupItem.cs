@@ -2,7 +2,21 @@
 
 public class GroupItem
 {
-    public AllowedArgumentsActions Action { get; set; }
-    public List<string> Paths { get; init; } = [];
+    readonly HashSet<string> _paths = [];
+    
+    public CommandAction Action { get; set; }
+    public IReadOnlySet<string> Paths => _paths;
     public bool Delete { get; set; }
+    
+    public void AddPath(string path)
+    {
+        if (File.Exists(path) || Directory.Exists(path)) _paths.Add(path);
+    }
+
+    public void AddPaths(IEnumerable<string> paths)
+    {
+        foreach (var path in paths) AddPath(path);
+    }
+    
+    public void ClearPaths() => _paths.Clear();
 }

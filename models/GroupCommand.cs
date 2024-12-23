@@ -1,11 +1,7 @@
 ﻿namespace EncryptionTool.models;
 
-public class GroupCommand
+public class GroupCommand : Command
 {
-    public GroupAction Action { get; set; } = GroupAction.Invalid;
-    public AllowedArgumentsActions Process { get; set; } = AllowedArgumentsActions.unknown;
+    public GroupAction GroupAction { get; set; } = GroupAction.Invalid;
     public string Name { get; set; } = string.Empty;
-    public bool Delete { get; set; }
-    public List<string> Paths { get; } = [];
-
 }

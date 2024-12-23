@@ -4,11 +4,13 @@ using System.Text;
 
 namespace EncryptionTool.utils;
 
-public static class ArgumentParser
+public static class ArgumentsParser
 {
-    public static Arguments GetParsedArguments(string[] args, out ConfigService? config)
+    static readonly string[] AllowedArguments = ["action", "path", "password", "group", "delete"];
+    
+    public static Command GetCommand(string[] args, out ConfigService? config)
     {
-        Arguments arguments = new();
+        Command command = new();
         config = null;
 
         foreach (var arg in args)
@@ -18,22 +20,22 @@ public static class ArgumentParser
             var key = keyValue[0].ToLower();
             var value = keyValue.Length == 2 ? keyValue[1] : "";
 
-            if (!arguments.AllowedArguments.Contains(key)) continue;
+            if (!AllowedArguments.Contains(key)) continue;
 
             switch (key)
             {
                 case "path":
-                    foreach (var path in ExtractPaths(value)) arguments.AddPath(path);
+                    foreach (var path in ExtractPaths(value)) command.AddPath(path);
                     break;
                 case "password":
-                    arguments.Password = AesCbcEncryptionService.Pbkdf2HashBytes(Encoding.UTF8.GetBytes(value));
+                    command.Password = AesCbcEncryptionService.Pbkdf2HashBytes(Encoding.UTF8.GetBytes(value));
                     break;
                 case "action":
-                    if (!Enum.TryParse(value, true, out AllowedArgumentsActions parsedValue)) break;
-                    arguments.Action = parsedValue;
+                    if (!Enum.TryParse(value, true, out CommandAction parsedValue)) break;
+                    command.Action = parsedValue;
                     break;
                 case "delete":
-                    arguments.Delete = bool.TryParse(value, out var parsedDelete) && parsedDelete;
+                    command.Delete = bool.TryParse(value, out var parsedDelete) && parsedDelete;
                     break;
                 case "group":
                     config = new ConfigService();
@@ -41,10 +43,9 @@ public static class ArgumentParser
                     
                     if (group == null) break;
 
-                    arguments.Action = group.Action;
-                    arguments.Delete = group.Delete;
-                    foreach (var path in group.Paths) arguments.AddPath(path);
-                    
+                    command.Action = group.Action;
+                    command.Delete = group.Delete;
+                    foreach (var path in group.Paths) command.AddPath(path);
                     goto AfterParsing;
             }
         }
@@ -52,7 +53,7 @@ public static class ArgumentParser
         
         Array.Clear(args);
 
-        return arguments;
+        return command;
     }
 
     public static string[] ExtractPaths(string pathsString)

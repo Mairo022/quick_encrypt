@@ -6,31 +6,31 @@ namespace EncryptionTool.cmd;
 
 public static class Commands
 {
-    public static void Encrypt(Arguments arguments)
+    public static void Encrypt(Command command)
     {
-        foreach (var path in arguments.Path)
+        foreach (var path in command.Paths)
         {
             if (File.Exists(path))
             {
-                AesCbcEncryptionService.EncryptFile(path, arguments.Password);
+                AesCbcEncryptionService.EncryptFile(path, command.Password);
                 
-                if (arguments.Delete) FileUtils.OverwriteAndDeleteFile(new FileInfo(path));
+                if (command.Delete) FileUtils.OverwriteAndDeleteFile(new FileInfo(path));
             }
             else if (Directory.Exists(path))
             {
-                AesCbcEncryptionService.EncryptDirectory(path, arguments.Password);
+                AesCbcEncryptionService.EncryptDirectory(path, command.Password);
                 
-                if (arguments.Delete) FileUtils.OverwriteAndDeleteDirectory(new DirectoryInfo(path));
+                if (command.Delete) FileUtils.OverwriteAndDeleteDirectory(new DirectoryInfo(path));
             }
             else Console.WriteLine($"Invalid path: {path}");
         }
     }
 
-    public static void Decrypt(Arguments arguments)
+    public static void Decrypt(Command command)
     {
-        foreach (var path in arguments.Path)
+        foreach (var path in command.Paths)
         {
-            if (File.Exists(path)) AesCbcEncryptionService.DecryptFile(path, arguments.Password);
+            if (File.Exists(path)) AesCbcEncryptionService.DecryptFile(path, command.Password);
             else Console.WriteLine($"Invalid path: {path}");
         }
     }
