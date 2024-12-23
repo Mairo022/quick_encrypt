@@ -30,7 +30,12 @@ public static class Commands
     {
         foreach (var path in command.Paths)
         {
-            if (File.Exists(path)) AesCbcEncryptionService.DecryptFile(path, command.Password);
+            if (File.Exists(path))
+            {
+                AesCbcEncryptionService.DecryptFile(path, command.Password);
+                
+                if (command.Delete) FileUtils.OverwriteAndDeleteFile(new FileInfo(path));
+            }
             else Console.WriteLine($"Invalid path: {path}");
         }
     }
