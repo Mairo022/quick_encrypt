@@ -46,9 +46,9 @@ public class Cli(Command command, ConfigService? config)
                 continue;
             }
 
-            var inputSplit = input?.Trim().Split(" ", 2);
+            var inputSplit = input?.Trim().Split(" ");
 
-            if (inputSplit == null || inputSplit.Length != 2)
+            if (inputSplit == null || (inputSplit.Length != 2 && inputSplit.Length != 3))
             {
                 Console.WriteLine("Invalid command");
                 continue;
@@ -74,6 +74,11 @@ public class Cli(Command command, ConfigService? config)
             if (command.Paths.Count == 0)
             {
                 continue;
+            }
+
+            if (inputSplit is [_, _, "--delete"])
+            {
+                command.Delete = true;
             }
             
             // Get key and perform
@@ -227,8 +232,8 @@ public class Cli(Command command, ConfigService? config)
     static void WriteStartText()
     {
         Console.WriteLine("Available actions:");
-        Console.WriteLine("• encrypt [path]");
-        Console.WriteLine("• decrypt [path]");
+        Console.WriteLine("• encrypt [path] [--delete]");
+        Console.WriteLine("• decrypt [path] [--delete]");
         Console.WriteLine("• g - create a group");
         Console.WriteLine("• c - clear console");
         Console.WriteLine("• q - quit the program");
