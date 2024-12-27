@@ -236,7 +236,7 @@ public class ConfigService
     public void CliExample()
     {
         Console.WriteLine();
-        Console.WriteLine("Available group commands are: ");
+        Console.WriteLine("Available group commands: ");
         Console.WriteLine("1. Execute a group: g [group name]");
         Console.WriteLine("2. Create a group: g [group name] [action] [paths] [delete]");
         Console.WriteLine("3. Modify a group: g [group name] [property]=value");

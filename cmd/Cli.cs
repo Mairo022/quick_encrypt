@@ -234,8 +234,8 @@ public class Cli(Command command, ConfigService? config)
         Console.WriteLine("Available actions:");
         Console.WriteLine("• encrypt [path] [--delete]");
         Console.WriteLine("• decrypt [path] [--delete]");
-        Console.WriteLine("• g - create a group");
+        Console.WriteLine("• g - show group commands");
         Console.WriteLine("• c - clear console");
-        Console.WriteLine("• q - quit the program");
+        Console.WriteLine("• q - quit");
     }
 }
