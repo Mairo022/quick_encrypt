@@ -71,15 +71,10 @@ public class Cli(Command command, ConfigService? config)
                 command.AddPath(path);
             }
             
-            if (command.Paths.Count == 0)
-            {
-                continue;
-            }
+            if (command.Paths.Count == 0) continue;
 
-            if (inputSplit is [_, _, "--delete"])
-            {
-                command.Delete = true;
-            }
+            if (inputSplit.Contains("--delete")) command.Delete = true;
+            if (inputSplit.Contains("--overwrite")) command.Overwrite = true;
             
             // Get key and perform
             var key = GetHashedKeyFromConsole();
@@ -232,8 +227,8 @@ public class Cli(Command command, ConfigService? config)
     static void WriteStartText()
     {
         Console.WriteLine("Available actions:");
-        Console.WriteLine("• encrypt [path] [--delete]");
-        Console.WriteLine("• decrypt [path] [--delete]");
+        Console.WriteLine("• encrypt [path] [--delete] [--overwrite]");
+        Console.WriteLine("• decrypt [path] [--delete] [--overwrite]");
         Console.WriteLine("• g - show group commands");
         Console.WriteLine("• c - clear console");
         Console.WriteLine("• q - quit");

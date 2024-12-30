@@ -12,13 +12,13 @@ public static class Commands
         {
             if (File.Exists(path))
             {
-                AesCbcEncryptionService.EncryptFile(path, command.Password);
+                AesCbcEncryptionService.EncryptFile(path, command.Password, command.Overwrite);
                 
                 if (command.Delete) FileUtils.OverwriteAndDeleteFile(new FileInfo(path));
             }
             else if (Directory.Exists(path))
             {
-                AesCbcEncryptionService.EncryptDirectory(path, command.Password);
+                AesCbcEncryptionService.EncryptDirectory(path, command.Password, command.Overwrite);
                 
                 if (command.Delete) FileUtils.OverwriteAndDeleteDirectory(new DirectoryInfo(path));
             }
@@ -32,7 +32,7 @@ public static class Commands
         {
             if (File.Exists(path))
             {
-                AesCbcEncryptionService.DecryptFile(path, command.Password);
+                AesCbcEncryptionService.DecryptFile(path, command.Password, command.Overwrite);
                 
                 if (command.Delete) FileUtils.OverwriteAndDeleteFile(new FileInfo(path));
             }

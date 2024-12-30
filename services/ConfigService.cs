@@ -32,7 +32,7 @@ public class ConfigService
     void ReadGroups()
     {
         GroupItem group = new();
-        string[] groupKeys = ["paths", "action", "delete"];
+        string[] groupKeys = ["paths", "action", "delete", "overwrite"];
         
         var isGroupFilled = (GroupItem gr) => 
             gr.Action != CommandAction.unknown && gr.Paths.Count != 0;
@@ -80,6 +80,9 @@ public class ConfigService
                         group.AddPaths(value.Split(";"));
                         break;
                     }
+                    case "overwrite":
+                        group.Overwrite = bool.TryParse(value, out var overwrite) && overwrite;
+                        break;
                     case "delete":
                         group.Delete = bool.TryParse(value, out var delete) && delete;
                         break;
@@ -104,11 +107,13 @@ public class ConfigService
                 var key = $"[{group.Key}]";
                 var action = $"action={group.Value.Action}";
                 var paths = "paths=" + string.Join(";", group.Value.Paths);
+                var overwrite = $"overwrite={group.Value.Overwrite}";
                 var delete = $"delete={group.Value.Delete}";
 
                 writer.WriteLine(key);
                 writer.WriteLine(action);
                 writer.WriteLine(paths);
+                writer.WriteLine(overwrite);
                 writer.WriteLine(delete);
                 writer.WriteLine();
             }
@@ -145,7 +150,7 @@ public class ConfigService
         var inputSplit = input.Split(" ");
         if (inputSplit.Length < 2) return new GroupCommand();
 
-        string[] properties = ["paths", "action", "delete"];
+        string[] properties = ["paths", "action", "overwrite", "delete"];
         string[] flags = ["--delete", "--info"];
         
         var name = inputSplit[1];
@@ -192,31 +197,32 @@ public class ConfigService
                     var value = kvpSplit[1];
                     
                     if (!properties.Contains(property)) break;
-
-                    if ("action" == property && Enum.TryParse(value, true, out CommandAction parsedKvpAction))
-                    {
-                        groupCommand.GroupAction = GroupAction.Save;
-                        groupCommand.Action = parsedKvpAction;
-                    }
                     
-                    if ("delete" == property && bool.TryParse(value, out var parsedDelete))
+                    switch (property)
                     {
-                        groupCommand.GroupAction = GroupAction.Save;
-                        groupCommand.Delete = parsedDelete;
+                        case "action" when Enum.TryParse(value, true, out CommandAction parsedKvpAction):
+                            groupCommand.Action = parsedKvpAction;
+                            break;
+                        case "paths":
+                            groupCommand.AddPaths(value.Split(';'));
+                            break;
+                        case "overwrite" when bool.TryParse(value, out var parsedOverwrite):
+                            groupCommand.Overwrite = parsedOverwrite;
+                            break;
+                        case "delete" when bool.TryParse(value, out var parsedDelete):
+                            groupCommand.Delete = parsedDelete;
+                            break;
                     }
 
-                    if ("paths" == property)
-                    {
-                        groupCommand.GroupAction = GroupAction.Save;
-                        groupCommand.AddPaths(value.Split(';'));
-                    }
+                    groupCommand.GroupAction = GroupAction.Save;
                 }
 
                 break;
-            case 4 or 5:
+            case 4 or 5 or 6:
                 var action = inputSplit[2];
                 var paths = inputSplit[3];
                 var delete = inputSplit.ElementAtOrDefault(4) ?? bool.FalseString;
+                var overwrite = inputSplit.ElementAtOrDefault(5) ?? bool.FalseString;
 
                 if (!Enum.TryParse(action, true, out CommandAction parsedAction)) break;
 
@@ -224,6 +230,7 @@ public class ConfigService
                 groupCommand.Action = parsedAction;
                 groupCommand.Name = name;
                 groupCommand.AddPaths(paths.Split(';'));
+                groupCommand.Overwrite = bool.TryParse(overwrite, out var parsedOverwrite2) &&  parsedOverwrite2;
                 groupCommand.Delete = bool.TryParse(delete, out var parsedDelete2) && parsedDelete2;
                 
                 break;
@@ -238,7 +245,7 @@ public class ConfigService
         Console.WriteLine();
         Console.WriteLine("Available group commands: ");
         Console.WriteLine("1. Execute a group: g [group name]");
-        Console.WriteLine("2. Create a group: g [group name] [action] [paths] [delete]");
+        Console.WriteLine("2. Create a group: g [group name] [action] [paths] [delete] [overwrite]");
         Console.WriteLine("3. Modify a group: g [group name] [property]=value");
         Console.WriteLine("4. Delete a group: g [group name] --delete");
         Console.WriteLine("5. View group info: g [group name] --info");
@@ -258,6 +265,7 @@ public class ConfigService
                     Delete = groupCommand.Delete
                 };
                 group.AddPaths(groupCommand.Paths);
+                Groups[groupCommand.Name] = group;
 
                 return WriteGroupsToFile();
             }
@@ -293,6 +301,7 @@ public class ConfigService
         Console.WriteLine($"{groupName}");
         Console.WriteLine($"{new string('-', groupName.Length)}");
         Console.WriteLine($"Action: {Groups[groupName].Action}");
+        Console.WriteLine($"Overwrite: {Groups[groupName].Overwrite}");
         Console.WriteLine($"Delete original: {Groups[groupName].Delete}");
         Console.Write("Paths: ");
 

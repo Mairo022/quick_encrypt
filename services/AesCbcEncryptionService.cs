@@ -13,13 +13,15 @@ namespace EncryptionTool.services;
 
 public static class AesCbcEncryptionService
 {
-    public static void EncryptFile(string filepath, byte[] key)
+    public static void EncryptFile(string filepath, byte[] key, bool isFileOverwriteEnabled = false)
     {
-        var outputFilepath = FileUtils.GetUniqueFilepath($"{filepath}.bin");
-        var cipher = InitCipherEncrypt(key, out var iv);
+        var outputFilepath = GetFilepath(isFileOverwriteEnabled, $"{filepath}.bin");
+        HandleFileOverwriteFlag(isFileOverwriteEnabled, outputFilepath);
         
         var fileType = CreateEncryptedFiletypeBytes(key, FILE_TYPES.FILE);
         var encryptedSize = fileType.Length + 16 + new FileInfo(filepath).Length;
+        
+        var cipher = InitCipherEncrypt(key, out var iv);
         
         using var fileReadStream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
         using var fileWriteStream = new FileStream(outputFilepath, FileUtils.CreateForWriting(encryptedSize));
@@ -48,12 +50,14 @@ public static class AesCbcEncryptionService
         return cipher.DoFinal(encryptedBytes[16..]);
     }
 
-    public static void EncryptDirectory(string dir, byte[] key)
+    public static void EncryptDirectory(string dir, byte[] key, bool isFileOverwriteEnabled = false)
     {
         var filenames = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories);
         var parentDir = Directory.GetParent(dir).ToString();
         var outputFilepath = Path.Combine(parentDir, Path.GetFileName(dir) + ".bin");
-        outputFilepath = FileUtils.GetUniqueFilepath(outputFilepath);
+        outputFilepath = GetFilepath(isFileOverwriteEnabled, outputFilepath);
+        
+        HandleFileOverwriteFlag(isFileOverwriteEnabled, outputFilepath);
         
         long encryptedSize = GetTotalEncryptedFilesSize(filenames, parentDir);
         var fileType = CreateEncryptedFiletypeBytes(key, FILE_TYPES.DIRECTORY);
@@ -100,7 +104,7 @@ public static class AesCbcEncryptionService
         fileWriteStream.Close();
     }
 
-    public static void DecryptFile(string fPath, byte[] key)
+    public static void DecryptFile(string fPath, byte[] key, bool isFileOverwriteEnabled = false)
     {
         var dir = Path.GetDirectoryName(fPath);
 
@@ -142,11 +146,11 @@ public static class AesCbcEncryptionService
                     cipherStream.Read(buffer, 0, filenameSize);
                     
                     var filename = Encoding.UTF8.GetString(buffer[..filenameSize]);
-                    var filepath = Path.Combine(dir, filename);
+                    var filepath = GetFilepath(isFileOverwriteEnabled, Path.Combine(dir, filename));
                     fileEndPos = fileReadStream.Position + filesize;
 
                     FileUtils.CreateFileDirectories(filepath);
-                    filepath = FileUtils.GetUniqueFilepath(filepath);
+                    HandleFileOverwriteFlag(isFileOverwriteEnabled, filepath);
 
                     if (filesize < 0 || filesize > encryptedFileSize)
                         throw new Exception("Error reading file size");
@@ -181,8 +185,8 @@ public static class AesCbcEncryptionService
             var filepath = fPath;
             var filesize = new FileInfo(filepath).Length - 48;
 
-            if (filepath[^4..] != ".bin") filepath = FileUtils.GetUniqueFilepath(filepath);
-            else filepath = FileUtils.GetUniqueFilepath(filepath[..^4]);
+            filepath = GetFilepath(isFileOverwriteEnabled, filepath[^4..] != ".bin" ? filepath : filepath[..^4]);
+            HandleFileOverwriteFlag(isFileOverwriteEnabled, filepath);
 
             fileWriteStream = new(filepath, FileUtils.CreateForWriting(filesize - fileReadStream.Position));
 
@@ -321,5 +325,13 @@ public static class AesCbcEncryptionService
         var encrypted = cipher.DoFinal(BitConverter.GetBytes((int)filetype));
 
         return ArrayUtils.UniteByteArrays(iv, encrypted);
+    }
+    
+    static string GetFilepath(bool isFileOverwriteEnabled, string filepath) => 
+        isFileOverwriteEnabled ? filepath : FileUtils.GetUniqueFilepath(filepath);
+    
+    static void HandleFileOverwriteFlag(bool isFileOverwriteEnabled, string filepath)
+    {
+        if (isFileOverwriteEnabled && File.Exists(filepath)) File.Delete(filepath);
     }
 }

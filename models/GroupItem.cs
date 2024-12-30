@@ -7,6 +7,7 @@ public class GroupItem
     public CommandAction Action { get; set; }
     public IReadOnlySet<string> Paths => _paths;
     public bool Delete { get; set; }
+    public bool Overwrite { get; set; }
     
     public void AddPath(string path)
     {
