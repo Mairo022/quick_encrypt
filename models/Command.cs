@@ -21,6 +21,12 @@ public class Command()
     {
         if (File.Exists(path) || Directory.Exists(path))
         {
+            if (path.EndsWith('/') || path.EndsWith('\\'))
+            {
+                _paths.Add(path[..^1]);
+                return;
+            }
+            
             _paths.Add(path);
             return;
         }
