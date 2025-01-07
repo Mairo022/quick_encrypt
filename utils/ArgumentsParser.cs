@@ -8,10 +8,9 @@ public static class ArgumentsParser
 {
     static readonly string[] AllowedArguments = ["action", "path", "password", "group", "delete"];
     
-    public static Command GetCommand(string[] args, out ConfigService? config)
+    public static Command GetCommand(string[] args, Lazy<ConfigService> configLazy)
     {
         Command command = new();
-        config = null;
 
         foreach (var arg in args)
         {
@@ -38,7 +37,7 @@ public static class ArgumentsParser
                     command.Delete = bool.TryParse(value, out var parsedDelete) && parsedDelete;
                     break;
                 case "group":
-                    config = new ConfigService();
+                    var config = configLazy.Value;
                     var group = config.GetGroup(value);
                     
                     if (group == null) break;

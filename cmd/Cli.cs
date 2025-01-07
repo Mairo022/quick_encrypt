@@ -5,16 +5,12 @@ using EncryptionTool.utils;
 
 namespace EncryptionTool.cmd;
 
-public class Cli(Command command, ConfigService? config)
+public class Cli(Command command, ConfigService config)
 {
-    ConfigService? _config = config;
-
     public void Run()
     {
         if (ExecuteStartupCommand(command)) return;
         command.Clear();
-        
-        _config = null ?? new ConfigService();
         
         WriteStartText();
         while (true)
@@ -36,11 +32,11 @@ public class Cli(Command command, ConfigService? config)
 
                 if (input == "g")
                 {
-                    _config.CliExample();
+                    config.CliExample();
                     continue;
                 }
 
-                var groupCommand = _config.CliFormatGroupCommand(input);
+                var groupCommand = config.CliFormatGroupCommand(input);
                 ExecuteGroupCommand(groupCommand);
                 
                 continue;
@@ -92,12 +88,6 @@ public class Cli(Command command, ConfigService? config)
 
     void ExecuteGroupCommand(GroupCommand groupCommand)
     {
-        if (_config == null)
-        {
-            Console.WriteLine("Error: Config is null when executing group command");
-            return;
-        }
-        
         switch (groupCommand.GroupAction)
         {
             case GroupAction.Execute:
@@ -125,23 +115,23 @@ public class Cli(Command command, ConfigService? config)
                 break;
             
             case GroupAction.Save:
-                Console.WriteLine(_config.SaveGroup(groupCommand)
+                Console.WriteLine(config.SaveGroup(groupCommand)
                     ? $"Group {groupCommand.Name} is saved"
                     : $"Group {groupCommand.Name} failed to save");
                 break;
             
             case GroupAction.Delete:
-                Console.WriteLine(_config.DeleteGroup(groupCommand.Name)
+                Console.WriteLine(config.DeleteGroup(groupCommand.Name)
                     ? $"Group {groupCommand.Name} is removed"
                     : $"Group {groupCommand.Name} is not removed");
                 break;
             
             case GroupAction.Info:
-                _config.PrintGroup(groupCommand.Name);
+                config.PrintGroup(groupCommand.Name);
                 break;
             
             case GroupAction.List:
-                _config.PrintAllGroups();
+                config.PrintAllGroups();
                 break;
             
             default:
