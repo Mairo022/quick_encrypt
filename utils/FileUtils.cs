@@ -6,7 +6,7 @@ public static class FileUtils
     {
         if (!File.Exists(filepath)) return filepath;
 
-        var dir = Path.GetDirectoryName(filepath);
+        var dir = Path.GetDirectoryName(filepath)!;
         var extension = Path.GetExtension(filepath);
         var filename = Path.GetFileNameWithoutExtension(filepath);
 
@@ -29,7 +29,7 @@ public static class FileUtils
 
         if (!Directory.Exists(filepathDir))
         {
-            Directory.CreateDirectory(filepathDir);
+            Directory.CreateDirectory(filepathDir!);
         }
     }
 

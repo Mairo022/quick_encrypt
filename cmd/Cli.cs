@@ -166,7 +166,7 @@ public class Cli(Command command, ConfigService config)
             if (CommandAction.encrypt == command.Action) Commands.Encrypt(command);
             if (CommandAction.decrypt == command.Action) Commands.Decrypt(command);
 
-            Console.WriteLine($"{StringUtils.FirstLetterToUpper(command.Action.ToString()) ?? ""}ion successful");
+            Console.WriteLine($"{StringUtils.FirstLetterToUpper(command.Action.ToString())}ion successful");
 
             return true;
         }

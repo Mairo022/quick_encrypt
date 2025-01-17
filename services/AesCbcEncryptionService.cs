@@ -52,14 +52,18 @@ public static class AesCbcEncryptionService
 
     public static void EncryptDirectory(string dir, byte[] key, bool isFileOverwriteEnabled = false)
     {
+        var parentDir = Directory.GetParent(dir);
+        
+        if (parentDir == null) throw new InvalidOperationException("Can't encrypt root directory");
+        
         var filenames = Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories);
-        var parentDir = Directory.GetParent(dir).ToString();
-        var outputFilepath = Path.Combine(parentDir, Path.GetFileName(dir) + ".bin");
+        var parentDirStr = parentDir.ToString();
+        var outputFilepath = Path.Combine(parentDirStr, Path.GetFileName(dir) + ".bin");
         outputFilepath = GetFilepath(isFileOverwriteEnabled, outputFilepath);
         
         HandleFileOverwriteFlag(isFileOverwriteEnabled, outputFilepath);
         
-        long encryptedSize = GetTotalEncryptedFilesSize(filenames, parentDir);
+        long encryptedSize = GetTotalEncryptedFilesSize(filenames, parentDirStr);
         var fileType = CreateEncryptedFiletypeBytes(key, FILE_TYPES.DIRECTORY);
 
         var cipher = InitCipherEncrypt(key, out byte[] iv);
@@ -73,7 +77,7 @@ public static class AesCbcEncryptionService
         {
             using var fileReadStream = new FileStream(filename, FileMode.Open, FileAccess.Read);
 
-            var filenameRelativeToParent = filename[(parentDir.Length+1)..];
+            var filenameRelativeToParent = filename[(parentDirStr.Length+1)..];
             
             // Set file header
             var filepath = Encoding.UTF8.GetBytes(filenameRelativeToParent);
@@ -108,6 +112,8 @@ public static class AesCbcEncryptionService
     {
         var dir = Path.GetDirectoryName(fPath);
 
+        if (dir == null) throw new InvalidOperationException("Cannot find directory");
+
         // Prepare for file reading
         using var fileReadStream = new FileStream(fPath, FileMode.Open, FileAccess.Read);
         var bufferSize = 1024;
@@ -115,17 +121,17 @@ public static class AesCbcEncryptionService
 
         // Get filetype
         var filetypeArea = new byte[32];
-        fileReadStream.Read(filetypeArea, 0, 32);
+        fileReadStream.ReadExactly(filetypeArea);
         var filetype = GetDecryptedFiletype(filetypeArea, key);
 
         // Set cipher
         var iv = new byte[16];
-        fileReadStream.Read(iv, 0, 16);
+        fileReadStream.ReadExactly(iv);
         var cipher = InitCipherDecrypt(key, iv);
 
         // Prepare for decryption
         using var cipherStream = new CipherStream(fileReadStream, cipher, null);
-        FileStream fileWriteStream = null;
+        FileStream? fileWriteStream = null;
 
         if (FILE_TYPES.DIRECTORY == filetype)
         {
@@ -138,12 +144,12 @@ public static class AesCbcEncryptionService
 
                 if (isNewFile)
                 {
-                    cipherStream.Read(buffer, 0, 12);
+                    cipherStream.ReadExactly(buffer, 0 , 12);
                     
                     var filesize = BitConverter.ToInt64(buffer.AsSpan()[..8]);
                     var filenameSize = BitConverter.ToInt32(buffer[8..12]);
                     
-                    cipherStream.Read(buffer, 0, filenameSize);
+                    cipherStream.ReadExactly(buffer, 0 , filenameSize);
                     
                     var filename = Encoding.UTF8.GetString(buffer[..filenameSize]);
                     var filepath = GetFilepath(isFileOverwriteEnabled, Path.Combine(dir, filename));
