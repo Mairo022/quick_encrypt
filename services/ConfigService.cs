@@ -13,7 +13,8 @@ public class ConfigService
         "groups.ini"
         );
 
-    Dictionary<string, GroupItem> Groups { get; } = new();
+    readonly Dictionary<string, GroupItem> _groups = new();
+    public IReadOnlyDictionary<string, GroupItem> Groups => _groups;
     
     public ConfigService()
     {
@@ -50,7 +51,7 @@ public class ConfigService
             
             if (isSection)
             {
-                if (section != string.Empty && isGroupFilled(group)) Groups.Add(section, group);
+                if (section != string.Empty && isGroupFilled(group)) _groups.Add(section, group);
                 
                 section = line[1..^1];
                 group = new GroupItem();
@@ -91,7 +92,7 @@ public class ConfigService
             
         }
         
-        if (section != string.Empty && isGroupFilled(group)) Groups.Add(section, group);
+        if (section != string.Empty && isGroupFilled(group)) _groups.Add(section, group);
     }
 
     bool WriteGroupsToFile()
@@ -102,7 +103,7 @@ public class ConfigService
         {
             using var writer = new StreamWriter(File.OpenWrite(tempFilePath));
 
-            foreach (var group in Groups)
+            foreach (var group in _groups)
             {
                 var key = $"[{group.Key}]";
                 var action = $"action={group.Value.Action}";
@@ -143,6 +144,7 @@ public class ConfigService
         }
     }
 
+    // Todo: Handle space in path (?, but config has paths with spaces)
     public GroupCommand CliFormatGroupCommand(string input)
     {
         if (input == "g --list") return new GroupCommand{ GroupAction = GroupAction.List };
@@ -155,7 +157,7 @@ public class ConfigService
         
         var name = inputSplit[1];
         
-        var groupExists = Groups.TryGetValue(name, out var group);
+        var groupExists = _groups.TryGetValue(name, out var group);
         var groupCommand = new GroupCommand();
 
         if (inputSplit.Length is 2 or 3 && !groupExists) return groupCommand;
@@ -254,7 +256,7 @@ public class ConfigService
     
     public bool SaveGroup(GroupCommand groupCommand)
     {
-        var groupExists = Groups.TryGetValue(groupCommand.Name, out var group);
+        var groupExists = _groups.TryGetValue(groupCommand.Name, out var group);
 
         try
         {
@@ -262,10 +264,11 @@ public class ConfigService
             {
                 group = new GroupItem{
                     Action = groupCommand.Action, 
-                    Delete = groupCommand.Delete
+                    Delete = groupCommand.Delete,
+                    Overwrite = groupCommand.Overwrite,
                 };
                 group.AddPaths(groupCommand.Paths);
-                Groups[groupCommand.Name] = group;
+                _groups[groupCommand.Name] = group;
 
                 return WriteGroupsToFile();
             }
@@ -279,6 +282,7 @@ public class ConfigService
                 group.ClearPaths();
                 group.AddPaths(groupCommand.Paths);
                 group.Delete = groupCommand.Delete;
+                group.Overwrite = groupCommand.Overwrite;
             }
 
             return WriteGroupsToFile();
@@ -292,7 +296,7 @@ public class ConfigService
 
     public GroupItem? GetGroup(string groupName)
     {
-        return Groups.GetValueOrDefault(groupName);
+        return _groups.GetValueOrDefault(groupName);
     }
 
     public void PrintGroup(string groupName)
@@ -300,13 +304,13 @@ public class ConfigService
         Console.WriteLine();
         Console.WriteLine($"{groupName}");
         Console.WriteLine($"{new string('-', groupName.Length)}");
-        Console.WriteLine($"Action: {Groups[groupName].Action}");
-        Console.WriteLine($"Overwrite: {Groups[groupName].Overwrite}");
-        Console.WriteLine($"Delete original: {Groups[groupName].Delete}");
+        Console.WriteLine($"Action: {_groups[groupName].Action}");
+        Console.WriteLine($"Overwrite: {_groups[groupName].Overwrite}");
+        Console.WriteLine($"Delete original: {_groups[groupName].Delete}");
         Console.Write("Paths: ");
 
         var i = 0;
-        foreach (var path in Groups[groupName].Paths)
+        foreach (var path in _groups[groupName].Paths)
         {
             if (i == 0) Console.WriteLine(path);
             else Console.WriteLine("       " + path);
@@ -316,7 +320,7 @@ public class ConfigService
 
     public void PrintAllGroups()
     {
-        foreach (var group in Groups)
+        foreach (var group in _groups)
         {
             Console.WriteLine(group.Key);
         }
@@ -324,7 +328,7 @@ public class ConfigService
 
     public bool DeleteGroup(string groupName)
     {
-        return Groups.Remove(groupName) && WriteGroupsToFile();
+        return _groups.Remove(groupName) && WriteGroupsToFile();
     }
 
 }

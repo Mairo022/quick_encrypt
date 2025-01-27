@@ -18,6 +18,11 @@ public class GroupItem
     {
         foreach (var path in paths) AddPath(path);
     }
+
+    public void RemovePath(string path)
+    {
+        _paths.Remove(path);
+    }
     
     public void ClearPaths() => _paths.Clear();
 }

@@ -14,13 +14,30 @@
   <ItemGroup>
     <Compile Remove="tests\**" />
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Remove="tests\**" />
   </ItemGroup>
-
   <ItemGroup>
     <None Remove="tests\**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="winforms\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Remove="winforms\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="winforms\**" />
+  </ItemGroup>
+    
+  <ItemGroup>
+    <Compile Remove="wpf\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Remove="wpf\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="wpf\**" />
+  </ItemGroup>
 </Project>
