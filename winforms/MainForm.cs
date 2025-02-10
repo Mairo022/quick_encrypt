@@ -10,6 +10,7 @@ namespace winforms;
 public partial class MainForm : Form
 {
     readonly ConfigService configService = new();
+    readonly List<string> selectedPaths = [];
 
     bool moveForm;
     Point moveFormPosition = Point.Empty;
@@ -71,112 +72,133 @@ public partial class MainForm : Form
 
     // Form actions
 
-    void encrypt_file_btn_MouseClick(object sender, MouseEventArgs e)
+    void select_file_btn_Click(object sender, EventArgs e)
+    {
+        if (openFilesDialog.ShowDialog() != DialogResult.OK) return;
+
+        resetSelected();
+        setActionButtonsStatus(true);
+        selected_label.Visible = true;
+
+        if (openFilesDialog.FileNames.Length > 1)
+        {
+            selectedPaths.AddRange(openFilesDialog.FileNames);
+            selected_pathlist.Items.AddRange(openFilesDialog.FileNames);
+            selected_pathlist.Visible = true;
+            return;
+        }
+
+        selectedPaths.Add(openFilesDialog.FileNames[0]);
+        selected_path_label.Text = openFilesDialog.FileNames[0];
+        selected_path_label.Visible = true;
+    }
+
+    void select_folder_btn_Click(object sender, EventArgs e)
+    {
+        if (folderBrowserDialog.ShowDialog() != DialogResult.OK) return;
+
+        resetSelected();
+        setActionButtonsStatus(true);
+
+        selectedPaths.Add(folderBrowserDialog.SelectedPath);
+
+        selected_path_label.Text = folderBrowserDialog.SelectedPath;
+        selected_path_label.Visible = true;
+        selected_label.Visible = true;
+    }
+
+    void encrypt_btn_Click(object sender, EventArgs e)
     {
         var command = new Command { Action = CommandAction.encrypt };
+        command.AddPaths(selectedPaths);
 
         hideResultLabels();
 
-        if (e.Button == MouseButtons.Left)
+        var passwordForm = new PasswordForm(command.Paths);
+        if (passwordForm.ShowDialog() == DialogResult.OK)
         {
-            if (openFilesDialog.ShowDialog() == DialogResult.OK)
+            command.Password = AesCbcEncryptionService.Pbkdf2HashBytes(Encoding.UTF8.GetBytes(passwordForm.password));
+
+            try
             {
-                command.AddPaths(openFilesDialog.FileNames);
-
-                var passwordForm = new PasswordForm(command.Paths);
-                if (passwordForm.ShowDialog() == DialogResult.OK)
-                {
-                    command.Password = AesCbcEncryptionService.Pbkdf2HashBytes(Encoding.UTF8.GetBytes(passwordForm.password));
-
-                    try
-                    {
-                        processing_dots.Visible = true;
-                        Commands.Encrypt(command);
-                        setResultLabels(true, "encrypted", command.Paths.Count <= 1 ? "file" : "files");
-                    }
-                    catch (Exception ex)
-                    {
-                        setResultLabels(false, "encrypt", command.Paths.Count <= 1 ? "file" : "files");
-                    }
-                    finally
-                    {
-                        processing_dots.Visible = false;
-                    }
-                }
+                processing_dots.Visible = true;
+                Commands.Encrypt(command);
+                setResultLabels(true, "encrypted", command.Paths.Count > 1 ? "paths" : "path");
+            }
+            catch (Exception)
+            {
+                setResultLabels(false, "encrypt", command.Paths.Count > 1 ? "paths" : "path");
+            }
+            finally
+            {
+                processing_dots.Visible = false;
             }
         }
+
+        resetSelected();
+        setActionButtonsStatus(false);
     }
 
-    void encrypt_folder_btn_MouseClick(object sender, MouseEventArgs e)
-    {
-        var command = new Command { Action = CommandAction.encrypt };
-
-        hideResultLabels();
-
-        if (e.Button == MouseButtons.Left)
-        {
-            if (folderBrowserDialog.ShowDialog() == DialogResult.OK)
-            {
-                command.AddPath(folderBrowserDialog.SelectedPath);
-
-                var passwordForm = new PasswordForm(command.Paths);
-                if (passwordForm.ShowDialog() == DialogResult.OK)
-                {
-                    command.Password = AesCbcEncryptionService.Pbkdf2HashBytes(Encoding.UTF8.GetBytes(passwordForm.password));
-
-                    try
-                    {
-                        processing_dots.Visible = true;
-                        Commands.Encrypt(command);
-                        setResultLabels(true, "encrypted", "folder");
-                    }
-                    catch (Exception ex)
-                    {
-                        setResultLabels(false, "encrypt", "folder");
-                    }
-                    finally
-                    {
-                        processing_dots.Visible = false;
-                    }
-                }
-            }
-        }
-    }
-
-    void decrypt_btn_MouseClick(object sender, MouseEventArgs e)
+    void decrypt_btn_Click(object sender, EventArgs e)
     {
         var command = new Command { Action = CommandAction.decrypt };
+        command.AddPath(selectedPaths[0]);
 
         hideResultLabels();
 
-        if (e.Button == MouseButtons.Left)
+        var passwordForm = new PasswordForm(command.Paths, command.Action);
+        if (passwordForm.ShowDialog() == DialogResult.OK)
         {
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            command.Password = AesCbcEncryptionService.Pbkdf2HashBytes(Encoding.UTF8.GetBytes(passwordForm.password));
+
+            try
             {
-                command.AddPaths(openFileDialog.FileNames);
-
-                var passwordForm = new PasswordForm(command.Paths, command.Action);
-                if (passwordForm.ShowDialog() == DialogResult.OK)
-                {
-                    command.Password = AesCbcEncryptionService.Pbkdf2HashBytes(Encoding.UTF8.GetBytes(passwordForm.password));
-
-                    try
-                    {
-                        processing_dots.Visible = true;
-                        Commands.Decrypt(command);
-                        setResultLabels(true, "decrypt", "file");
-                    }
-                    catch (Exception)
-                    {
-                        setResultLabels(false, "decrypt", "file");
-                    }
-                    finally
-                    {
-                        processing_dots.Visible = false;
-                    }
-                }
+                processing_dots.Visible = true;
+                Commands.Decrypt(command);
+                setResultLabels(true, "decrypted", "file");
+            }
+            catch (Exception)
+            {
+                setResultLabels(false, "decrypt", "file");
+            }
+            finally
+            {
+                processing_dots.Visible = false;
             }
         }
+
+        resetSelected();
+        setActionButtonsStatus(false);
+    }
+
+    void delete_btn_Click(object sender, EventArgs e)
+    {
+        try
+        {
+            var pathExists = true;
+            processing_dots.Visible = true;
+
+            if (File.Exists(selectedPaths[0])) FileUtils.OverwriteAndDeleteFile(new FileInfo(selectedPaths[0]));
+            else if (Directory.Exists(selectedPaths[0])) FileUtils.OverwriteAndDeleteDirectory(new DirectoryInfo(selectedPaths[0]));
+            else
+            {
+                pathExists = false;
+                setResultLabels(false, "delete", ", path is not pathExists");
+            }
+
+            if (pathExists) setResultLabels(true, "deleted", "path");
+        }
+        catch (Exception)
+        {
+            setResultLabels(false, "delete", "");
+        }
+        finally
+        {
+            processing_dots.Visible = false;
+        }
+        
+        resetSelected();
+        setActionButtonsStatus(false);
     }
 
     // Groups
@@ -346,5 +368,23 @@ public partial class MainForm : Form
         group_execute_btn.Enabled = true;
         group_edit_btn.Enabled = true;
         group_delete_btn.Enabled = true;
+    }
+
+    void setActionButtonsStatus(bool enabled)
+    {
+        encrypt_btn.Enabled = enabled;
+        decrypt_btn.Enabled = enabled;
+        delete_btn.Enabled = enabled;
+    }
+
+    void resetSelected()
+    {
+        selectedPaths.Clear();
+        selected_label.Visible = false;
+        selected_path_label.Visible = false;
+        selected_pathlist.Visible = false;
+
+        selected_pathlist.Items.Clear();
+        selected_path_label.Text = null;
     }
 }
