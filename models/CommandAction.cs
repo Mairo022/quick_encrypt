@@ -4,5 +4,6 @@ public enum CommandAction
 {
     unknown,
     encrypt,
-    decrypt
+    decrypt,
+    delete
 }

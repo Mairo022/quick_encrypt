@@ -49,6 +49,9 @@ public static class ArgumentsParser
             }
         }
         AfterParsing:
+
+        var isDeleteCommand = command is { Action: CommandAction.unknown, Delete: false, Paths.Count: 1 };
+        if (isDeleteCommand) command.Action = CommandAction.delete;
         
         Array.Clear(args);
 

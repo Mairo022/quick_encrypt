@@ -42,6 +42,22 @@ public class Cli(Command command, ConfigService config)
                 continue;
             }
 
+            if (input.StartsWith("delete"))
+            {
+                var path = input[("delete".Length +1)..];
+                command.AddPath(path);
+                command.Action = CommandAction.delete;
+
+                if (command.Paths.Count == 0)
+                {
+                    command.Clear();
+                    continue;
+                }
+                
+                ExecuteDeleteCommand(command);
+                continue;
+            }
+
             var inputSplit = input?.Trim().Split(" ");
 
             if (inputSplit == null || (inputSplit.Length != 2 && inputSplit.Length != 3))
@@ -145,6 +161,11 @@ public class Cli(Command command, ConfigService config)
         if (command is not { Action: not CommandAction.unknown, Paths.Count: > 0 }) return false;
         if (command.Password.Length > 0 && ActOnInputs(command)) return true;
         
+        if (command.Action == CommandAction.delete)
+        {
+            return ExecuteDeleteCommand(command);
+        }
+        
         if (command.Password.Length == 0)
         {
             var key = GetHashedKeyFromConsole();
@@ -155,6 +176,27 @@ public class Cli(Command command, ConfigService config)
         }
 
         return false;
+    }
+
+    static bool ExecuteDeleteCommand(Command command)
+    {
+        try
+        {
+            Console.WriteLine($"Deleting {command.Paths.First()}");
+            Commands.Delete(command);
+            Console.WriteLine("Deleted successfully");
+            
+            return true;
+        }
+        catch (Exception)
+        {
+            Console.WriteLine("Failed to delete");
+            return false;
+        }
+        finally
+        {
+            command.Clear();
+        }
     }
     
     static bool ActOnInputs(Command command)
@@ -219,6 +261,7 @@ public class Cli(Command command, ConfigService config)
         Console.WriteLine("Available actions:");
         Console.WriteLine("• encrypt [path] [--delete] [--overwrite]");
         Console.WriteLine("• decrypt [path] [--delete] [--overwrite]");
+        Console.WriteLine("• delete [path]");
         Console.WriteLine("• g - show group commands");
         Console.WriteLine("• c - clear console");
         Console.WriteLine("• q - quit");

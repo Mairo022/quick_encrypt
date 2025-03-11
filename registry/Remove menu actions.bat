@@ -7,8 +7,10 @@ echo Windows Registry Editor Version 5.00
 
 echo [-HKEY_CLASSES_ROOT\*\shell\Quick Encrypt]
 echo [-HKEY_CLASSES_ROOT\*\shell\Quick Encrypt Decrypt]
+echo [-HKEY_CLASSES_ROOT\*\shell\Quick Encrypt Delete]
 echo [-HKEY_CLASSES_ROOT\Directory\shell\Quick Encrypt]
 echo [-HKEY_CLASSES_ROOT\Directory\shell\Quick Encrypt Decrypt]
+echo [-HKEY_CLASSES_ROOT\Directory\shell\Quick Encrypt Delete]
 ) > "%regFile%"
 
 regedit /s "%regFile%"
