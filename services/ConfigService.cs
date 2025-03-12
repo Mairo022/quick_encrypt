@@ -143,8 +143,7 @@ public class ConfigService
                 File.Delete(tempFilePath);
         }
     }
-
-    // Todo: Handle space in path (?, but config has paths with spaces)
+    
     public GroupCommand CliFormatGroupCommand(string input)
     {
         if (input == "g --list") return new GroupCommand{ GroupAction = GroupAction.List };
@@ -169,6 +168,7 @@ public class ConfigService
             groupCommand.Action = group.Action;
             groupCommand.AddPaths(group.Paths);
             groupCommand.Delete = group.Delete;
+            groupCommand.Overwrite = group.Overwrite;
         }
         
         switch (inputSplit.Length)

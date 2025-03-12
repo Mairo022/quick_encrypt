@@ -126,6 +126,7 @@ public class Cli(Command command, ConfigService config)
                 command.Action = groupCommand.Action;
                 command.Password = keyGroup;
                 command.Delete = groupCommand.Delete;
+                command.Overwrite = groupCommand.Overwrite;
                 
                 ActOnInputs(command);
                 break;
