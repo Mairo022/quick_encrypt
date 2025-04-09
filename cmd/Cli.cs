@@ -1,4 +1,5 @@
 ﻿using System.Security;
+using System.Text;
 using EncryptionTool.models;
 using EncryptionTool.services;
 using EncryptionTool.utils;
@@ -57,10 +58,10 @@ public class Cli(Command command, ConfigService config)
                 ExecuteDeleteCommand(command);
                 continue;
             }
+            
+            var inputSplit = FormatInput(input.Trim().Split(" "));
 
-            var inputSplit = input?.Trim().Split(" ");
-
-            if (inputSplit == null || (inputSplit.Length != 2 && inputSplit.Length != 3))
+            if (inputSplit.Length < 2)
             {
                 Console.WriteLine("Invalid command");
                 continue;
@@ -101,7 +102,7 @@ public class Cli(Command command, ConfigService config)
             ActOnInputs(command);
         }
     }
-
+    
     void ExecuteGroupCommand(GroupCommand groupCommand)
     {
         switch (groupCommand.GroupAction)
@@ -255,6 +256,38 @@ public class Cli(Command command, ConfigService config)
         Console.Write("\n");
 
         return AesCbcEncryptionService.Pbkdf2HashSecureString(password);
+    }
+    
+    static string[] FormatInput(string[] inputArr)
+    {
+        var hasMarks = inputArr[1].StartsWith('"');
+
+        if (!hasMarks) return inputArr;
+
+        var formattedInput = new List<string>();
+        var stringBuilder = new StringBuilder();
+
+        for (var i = 2; i < inputArr.Length; i++)
+        {
+            if (!inputArr[i].EndsWith('"')) continue;
+            
+            stringBuilder.Append(inputArr[1][1..]);
+            
+            for (var j = 2; j < i; j++)
+            {
+                stringBuilder.Append(' ');
+                stringBuilder.Append(inputArr[j]);
+            }
+            
+            stringBuilder.Append(' ');
+            stringBuilder.Append(inputArr[i][..^1]);
+            
+            formattedInput.Add(inputArr[0]);
+            formattedInput.Add(stringBuilder.ToString());
+            formattedInput.AddRange(inputArr[(i + 1)..]);
+        }
+
+        return formattedInput.ToArray();
     }
 
     static void WriteStartText()
