@@ -32,12 +32,12 @@
   </ItemGroup>
     
   <ItemGroup>
-    <Compile Remove="wpf\**" />
+    <Compile Remove="guiAvalonia\**" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Remove="wpf\**" />
+    <EmbeddedResource Remove="guiAvalonia\**" />
   </ItemGroup>
   <ItemGroup>
-    <None Remove="wpf\**" />
+    <None Remove="guiAvalonia\**" />
   </ItemGroup>
 </Project>

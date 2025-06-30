@@ -1,0 +1,206 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="guiAvalonia.App"
+             xmlns:local="using:guiAvalonia"
+             RequestedThemeVariant="Default">
+    
+    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+    
+    <Application.Resources>
+        <x:Double x:Key="ControlContentThemeFontSize">14</x:Double>
+        <x:String x:Key="ControlContentThemeFontFamily">Arial</x:String>
+        <CornerRadius x:Key="CornerRadius">2</CornerRadius>
+        <FontFamily x:Key="GlobalFontFamily">Roboto</FontFamily>
+        <Color x:Key="PrimaryColor">#FAFAFA</Color>
+        <Color x:Key="SecondaryColor">#dadada</Color>
+        <Color x:Key="BorderColor">#45464b</Color>
+        <Color x:Key="BorderHoverColor">#54555A</Color>
+        <Color x:Key="BackgroundColorApp">#25262C</Color>
+        
+    </Application.Resources>
+  
+    <Application.Styles>
+        
+        <!-- Buttons with Border -->
+        <Style Selector="Border.button-effects">
+            <Setter Property="Background" Value="#303137"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="CornerRadius" Value="{StaticResource CornerRadius}"/>
+            
+            <Style Selector="^ Button:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="#3a3b42" />
+                <Setter Property="BorderBrush" Value="#5d5f6b" />
+                <Setter Property="Foreground" Value="#FAFAFA" />
+            </Style>
+            
+            <Style Selector="^ Button:pressed /template/ ContentPresenter">
+                <Setter Property="Background" Value="#2c2d33" />
+            </Style>
+            
+            <Style Selector="^ Button:disabled /template/ ContentPresenter">
+                <Setter Property="Foreground" Value="{StaticResource SecondaryColor}" />
+            </Style>
+        </Style>
+        
+        <Style Selector="Border.button-size-m">
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="Width" Value="100"/>
+        </Style>
+        
+        <Style Selector="Button.size-m">
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="Width" Value="100"/>
+        </Style>
+        
+        <Style Selector="Border.button-size-s">
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="Width" Value="86"/>
+        </Style>
+        
+        <Style Selector="Button.size-s">
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="Width" Value="86"/>
+        </Style>
+        
+        <Style Selector="Button.general">
+            <Setter Property="Margin" Value="-1,0,0,0"/>
+            <Setter Property="Padding" Value="0,0,0,0"/>
+            <Setter Property="Foreground" Value="#FAFAFA"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+        
+        <!-- ToggleButton -->
+        <Style Selector="ToggleButton">
+            <Setter Property="Foreground" Value="Transparent"/>
+            <Setter Property="Background" Value="Transparent"/>
+            
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Background" Value="#3a3b42" />
+                <Setter Property="BorderBrush" Value="#5d5f6b" />
+                <Setter Property="Foreground" Value="#5d5f6b" />
+            </Style>
+            
+            <Style Selector="^:checked /template/ ContentPresenter">
+                <Setter Property="Background" Value="#3a3b42" />
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+                <Setter Property="Foreground" Value="#FAFAFA" />
+                
+                <Style Selector="^:pointerover">
+                    <Setter Property="Background" Value="#3a3b42" />
+                    <Setter Property="Foreground" Value="{StaticResource SecondaryColor}"/>
+                    <Setter Property="BorderBrush" Value="#5d5f6b" />
+                </Style>
+            </Style>
+        </Style>
+        
+        <Style Selector="ToggleButton.general">
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        
+        <Style Selector="ToggleButton.border-adjustments">
+            <Setter Property="Foreground" Value="Transparent"/>
+            <Setter Property="Margin" Value="-1,0,0,0"></Setter>
+            <Setter Property="Padding" Value="1,2, 0,0"></Setter>
+        </Style>
+        
+        <!-- RadioButton -->
+        <Style Selector="RadioButton">
+            <Style Selector="^:pointerover /template/ ContentPresenter">
+                <Setter Property="Foreground" Value="{StaticResource PrimaryColor}"/>
+            </Style>
+            <Style Selector="^:checked /template/ ContentPresenter">
+                <Setter Property="Foreground" Value="{StaticResource PrimaryColor}"/>
+                
+            </Style>
+        </Style>
+        
+        <!-- TextBlock -->
+        <Style Selector="TextBlock.secondary">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource SecondaryColor}"/>
+        </Style>
+        <Style Selector="TextBlock.wrap">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        
+        <!-- TextBox -->
+        <Style Selector="TextBox">
+            <Setter Property="Padding" Value="12,1,12,0"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#303137"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CaretBrush" Value="#FAFAFA"/>
+            <Setter Property="Foreground" Value="#FAFAFA" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="CornerRadius" Value="{StaticResource CornerRadius}"/>
+            
+            <Style Selector="^:pointerover">
+                <Setter Property="Foreground" Value="#FAFAFA" /> <!-- Typed text colour -->
+
+                <Style Selector="^ /template/ Border">
+                    <Setter Property="BorderBrush" Value="{StaticResource BorderHoverColor}"/>
+                    <Setter Property="Background" Value="#303137" />
+                </Style>
+
+                <Style Selector="^ /template/ TextBlock"> <!-- WaterMark colour -->
+                    <Setter Property="Foreground" Value="{StaticResource SecondaryColor}" />
+                </Style>
+            </Style>
+            
+            <Style Selector="^:focus">
+                <Setter Property="Foreground" Value="#FAFAFA" />
+
+                <Style Selector="^ /template/ TextBlock">
+                    <Setter Property="Foreground" Value="{StaticResource SecondaryColor}" />
+                </Style>
+
+                <Style Selector="^ /template/ Border">
+                    <Setter Property="Background" Value="#303137"/>
+                    <Setter Property="BorderBrush" Value="{StaticResource BorderHoverColor}"/>
+                    <Setter Property="BorderThickness" Value="1" />
+                </Style>
+            </Style>
+        </Style>
+        
+        <!-- General styles -->
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource GlobalFontFamily}"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryColor}"/>
+        </Style>
+        <Style Selector="Button">
+            <Setter Property="FontFamily" Value="{StaticResource GlobalFontFamily}"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryColor}"/>
+        </Style>
+        <Style Selector="RadioButton">
+            <Setter Property="FontFamily" Value="{StaticResource GlobalFontFamily}"/>
+            <Setter Property="Foreground" Value="{StaticResource PrimaryColor}"/>
+        </Style>
+        <Style Selector="Border">
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="TextBox">
+            <Setter Property="FontFamily" Value="{StaticResource GlobalFontFamily}"/>
+        </Style>
+        <Style Selector="ToggleButton">
+            <Setter Property="FontFamily" Value="{StaticResource GlobalFontFamily}"/>
+            <Setter Property="Foreground" Value="#FAFAFA"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <FluentTheme />
+    </Application.Styles>
+    
+</Application>
+

@@ -253,6 +253,12 @@ public class ConfigService
         Console.WriteLine("5. View group info: g [group name] --info");
         Console.WriteLine("6. View all groups: g --list");
     }
+
+    public void AddGroup(Dictionary<string, GroupItem> group)
+    {
+        _groups.Add(group.First().Key, group.First().Value);
+        WriteGroupsToFile();
+    }
     
     public bool SaveGroup(GroupCommand groupCommand)
     {

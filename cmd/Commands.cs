@@ -22,7 +22,7 @@ public static class Commands
                 
                 if (command.Delete) FileUtils.OverwriteAndDeleteDirectory(new DirectoryInfo(path));
             }
-            else Console.WriteLine($"Invalid path: {path}");
+            else Console.WriteLine($"COMMANDS: Invalid path: {path}");
         }
     }
 
@@ -36,15 +36,16 @@ public static class Commands
                 
                 if (command.Delete) FileUtils.OverwriteAndDeleteFile(new FileInfo(path));
             }
-            else Console.WriteLine($"Invalid path: {path}");
+            else Console.WriteLine($"COMMANDS: Invalid path: {path}");
         }
     }
 
     public static void Delete(Command command)
     {
-        var path = command.Paths.First();
-        
-        if (Directory.Exists(path)) FileUtils.OverwriteAndDeleteDirectory(new DirectoryInfo(path));
-        else if (File.Exists(path)) FileUtils.OverwriteAndDeleteFile(new FileInfo(path));
+        foreach (var path in command.Paths)
+        {
+            if (Directory.Exists(path)) FileUtils.OverwriteAndDeleteDirectory(new DirectoryInfo(path));
+            else if (File.Exists(path)) FileUtils.OverwriteAndDeleteFile(new FileInfo(path));            
+        }
     }
 }

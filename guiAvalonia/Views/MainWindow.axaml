@@ -1,0 +1,171 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:guiAvalonia.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="620"
+        Width="460"
+        Height="620"
+        Background="{StaticResource BackgroundColorApp}"
+        CanResize="False"
+        x:Class="guiAvalonia.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="Quick Encrypt">
+    <Window.Styles>
+        
+    </Window.Styles>
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+    
+    <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, *" Margin="40, 40">
+        <TextBlock 
+            Grid.Row="0"
+            VerticalAlignment="Top"
+            HorizontalAlignment="Center"
+            Margin="0, 0, 0, 40"
+            FontSize="24"
+            FontWeight="500"
+            Text="Quick Encrypt"/>
+        <StackPanel Grid.Row="1"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    Spacing="12"
+                    Margin="0,0,0,10">
+            
+            <Border Classes="button-effects button-size-m">
+                <Button Classes="size-m general" Click="PickFileBtn_Click">
+                    Pick File
+                </Button>
+            </Border>
+            <Border Classes="button-effects button-size-m">
+                <Button Classes="size-m general" Click="PickFolderBtn_Click">
+                    Pick Folder
+                </Button>
+            </Border>
+        </StackPanel>
+        
+        <StackPanel Grid.Row="2" Orientation="Vertical" HorizontalAlignment="Center" Spacing="4">
+            <DockPanel HorizontalAlignment="Center">
+                <TextBlock x:Name="SelectedPathInfo"
+                           Classes="secondary"
+                           DockPanel.Dock="Left"
+                           Margin="0, 0, 4, 0" 
+                           Opacity="0"
+                           Text="Path:"/>
+                <TextBlock x:Name="SelectedPathTextBlock" 
+                           Classes="secondary wrap"
+                           Text=""/> 
+            </DockPanel>
+            <DockPanel HorizontalAlignment="Center">
+                <TextBlock  x:Name="SelectedFileInfo"
+                            Classes="secondary"
+                            DockPanel.Dock="Left"
+                            Opacity="0"
+                            Margin="0, 0, 4, 0"
+                            Text="Files:"/>
+                <TextBlock x:Name="SelectedFilesTextBlock"
+                           Classes="secondary wrap"
+                           Text=""/>                
+            </DockPanel>
+        </StackPanel>
+        
+        <StackPanel Grid.Row="3" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Center"
+                    Spacing="12"
+                    Margin="0,36, 0, 16">
+            <Border Classes="button-effects button-size-m">
+                <Button x:Name="EncryptBtn" 
+                        Click="EncryptBtn_Click" 
+                        Classes="size-m general" 
+                        IsEnabled="False">
+                    Encrypt
+                </Button>
+            </Border>
+            <Border Classes="button-effects button-size-m">
+                <Button x:Name="DecryptBtn" 
+                        Click="DecryptBtn_Click" 
+                        Classes="size-m general" 
+                        IsEnabled="False">
+                    Decrypt
+                </Button>
+            </Border>
+            <Border Classes="button-effects button-size-m">
+                <Button x:Name="DeleteBtn" 
+                        Click="DeleteBtn_Click" 
+                        Classes="size-m general" 
+                        IsEnabled="False">
+                    Delete
+                </Button>
+            </Border>
+        </StackPanel>
+        
+        <Border Grid.Row="4" 
+                BorderBrush="{StaticResource BorderColor}"
+                CornerRadius="{StaticResource CornerRadius}"
+                Padding="6"
+                Background="#303137">
+            <ScrollViewer Height="163">
+                <ListBox x:Name="GroupsListBox"
+                         ItemsSource="{Binding GroupsListItems}"
+                         Padding="0" 
+                         Background="Transparent" 
+                         SelectionMode="Toggle"
+                         SelectionChanged="GroupsList_OnSelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="*, Auto" Margin="-2, -2, -2, -4">
+                                <TextBlock Grid.Column="0" 
+                                           HorizontalAlignment="Left"
+                                           Text="{Binding Name}"/>
+                                <TextBlock Grid.Column="1" 
+                                           Foreground="{StaticResource SecondaryColor}"
+                                           HorizontalAlignment="Right"
+                                           Text="{Binding Actions}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </ScrollViewer>
+        </Border>
+        
+        <StackPanel Grid.Row="5"
+                    Orientation="Horizontal"
+                    Margin="0, 12,0,0" 
+                    Spacing="12">
+            <Border Classes="button-effects button-size-s">
+                <Button x:Name="ExecuteGroupBtn" Click="GroupItem_ExecuteClick" Classes="size-s general" IsEnabled="False">
+                    Execute
+                </Button>
+            </Border>
+            <Border Classes="button-effects button-size-s">
+                <Button Click="GroupItemAdd_Click" Classes="size-s general">
+                    Add
+                </Button>
+            </Border>
+            <Border Classes="button-effects button-size-s">
+                <Button x:Name="EditGroupBtn" Click="GroupItem_EditClick" Classes="size-s general" IsEnabled="False">
+                    Edit
+                </Button>
+            </Border>
+            <Border Classes="button-effects button-size-s">
+                <Button x:Name="DeleteGroupBtn" Click="GroupItem_DeleteClick" Classes="size-s general" IsEnabled="False">
+                    Delete
+                </Button>
+            </Border>
+        </StackPanel>
+        <StackPanel Grid.Row="6" 
+                    VerticalAlignment="Bottom"
+                    Margin="0,0,0,20">
+            <TextBlock x:Name="MessageTextBlock"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Center"
+                       Text=""/>
+        </StackPanel>
+
+    </Grid>
+</Window>

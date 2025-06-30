@@ -1,0 +1,113 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:guiAvalonia.ViewModels"
+        mc:Ignorable="d"
+        CanResize="False"
+        d:DesignWidth="460" d:DesignHeight="548" Width="460" Height="548"
+        x:DataType="vm:GroupEditViewModel"
+        x:Class="guiAvalonia.Views.GroupEdit"
+        Background="{StaticResource BackgroundColorApp}"
+        Title="Group Editor">
+    
+    <StackPanel Margin="40">
+        <TextBox x:Name="NameTextBox" Watermark="Name" Text="{Binding Text}"/>
+        
+        <Border BorderBrush="{StaticResource BorderColor}"
+                CornerRadius="{StaticResource CornerRadius}"
+                Padding="6"
+                Margin="0,16"
+                Background="#303137">
+            <ScrollViewer Height="200">
+                <ListBox x:Name="GroupsListBox"
+                         ItemsSource="{Binding Paths}"
+                         Padding="0"
+                         SelectionMode="Toggle"
+                         SelectionChanged="PathsList_OnSelectionChanged"
+                         FontSize="12"
+                         Background="Transparent">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Padding="0,2,0,0"
+                                       HorizontalAlignment="Left"
+                                       VerticalAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       Text="{Binding .}"/>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </ScrollViewer>
+        </Border>
+        
+        <StackPanel Orientation="Horizontal"
+                    Spacing="14">
+            <Border Classes="button-effects button-size-m">
+                <Button Click="AddFileBtn_Click" Classes="size-m general">
+                    Add File
+                </Button>
+            </Border>
+            <Border Classes="button-effects button-size-m">
+                <Button Click="AddFolderBtn_Click" Classes="size-m general">
+                    Add Folder
+                </Button>
+            </Border>
+            <Border Classes="button-effects button-size-m">
+                <Button x:Name="RemoveBtn"
+                        IsEnabled="{Binding IsRemoveButtonEnabled}"
+                        Click="RemoveBtn_Click" 
+                        Classes="size-m general">
+                    Remove
+                </Button>
+            </Border>
+        </StackPanel>
+        
+        <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+            <Border Classes="button-effects" Height="28" Width="28">
+                <ToggleButton x:Name="DeleteToggleBtn" 
+                              IsChecked="{Binding IsDeleteButtonChecked}" 
+                              Classes="general border-adjustments">
+                    X
+                </ToggleButton>
+            </Border>
+            <TextBlock VerticalAlignment="Center" 
+                       Padding="10, 6">
+                Delete original
+            </TextBlock>
+            <Border Classes="button-effects" Height="28" Width="28" Margin="10, 0, 0, 0" >
+                <ToggleButton x:Name="ReplaceToggleBtn" 
+                              IsChecked="{Binding IsReplaceButtonChecked}" 
+                              Classes="general border-adjustments">
+                    X
+                </ToggleButton>
+            </Border>
+            <TextBlock VerticalAlignment="Center" 
+                       Padding="10, 6">
+                Replace
+            </TextBlock>
+        </StackPanel>
+        
+        <StackPanel Orientation="Horizontal" Margin="4,6,5,0" Spacing="14">
+            <RadioButton GroupName="First Group"
+                         IsChecked="{Binding IsEncryptSelected}"
+                         Content="Encrypt"/>
+            <RadioButton GroupName="First Group"
+                         IsChecked="{Binding IsDecryptSelected}"
+                         Content="Decrypt"/>
+        </StackPanel>
+        
+        <StackPanel Orientation="Horizontal" Margin="0, 30, 0, 0" Spacing="14">
+            <Border Classes="button-effects button-size-m">
+                <Button Classes="size-m general" Click="SaveBtn_Click">
+                    Save
+                </Button>
+            </Border>
+            <Border Classes="button-effects button-size-m">
+                <Button Classes="size-m general" Click="CancelBtn_Click">
+                    Cancel
+                </Button>
+            </Border>
+        </StackPanel>
+    </StackPanel>
+    
+</Window>

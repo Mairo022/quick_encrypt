@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "tests\Tests.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "winforms", "winforms\winforms.csproj", "{CE86151C-1E86-401C-8F6F-1CA57BDE8FAE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "guiAvalonia", "guiAvalonia\guiAvalonia.csproj", "{45B7EEEB-E506-4F77-8A82-DEEEDCFCFFC9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{CE86151C-1E86-401C-8F6F-1CA57BDE8FAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CE86151C-1E86-401C-8F6F-1CA57BDE8FAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CE86151C-1E86-401C-8F6F-1CA57BDE8FAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45B7EEEB-E506-4F77-8A82-DEEEDCFCFFC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45B7EEEB-E506-4F77-8A82-DEEEDCFCFFC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45B7EEEB-E506-4F77-8A82-DEEEDCFCFFC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45B7EEEB-E506-4F77-8A82-DEEEDCFCFFC9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
